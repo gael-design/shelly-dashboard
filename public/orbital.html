@@ -1,0 +1,1361 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>POWER STATION · ORBITAL CONTROL</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;600;800&family=Space+Grotesk:wght@300;400;500;700&display=swap" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"></script>
+  <style>
+    /* ══ ORBITAL THEME ════════════════════════════════════════ */
+    :root {
+      --bg:          #06050f;
+      --bg-surface:  rgba(12, 10, 30, 0.82);
+      --bg-card:     rgba(16, 14, 40, 0.72);
+      --border:      rgba(77, 124, 255, 0.18);
+      --border-str:  rgba(77, 124, 255, 0.45);
+      --text:        #e8eaed;
+      --text-dim:    #6b7280;
+      --muted:       #3b3f54;
+      --blue:        #4d7cff;
+      --blue-2:      #6d9bff;
+      --purple:      #8b5cf6;
+      --purple-2:    #a78bfa;
+      --cyan:        #22d3ee;
+      --red:         #ff4d4d;
+      --red-2:       #ff7b3d;
+      --amber:       #f59e0b;
+      --gold:        #fbbf24;
+      --blue-rgb:    77, 124, 255;
+      --purple-rgb:  139, 92, 246;
+      --cyan-rgb:    34, 211, 238;
+      --red-rgb:     255, 77, 77;
+      --gold-rgb:    251, 191, 36;
+    }
+
+    *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+    html, body {
+      width: 100%; height: 100%;
+      overflow: hidden;
+      font-family: 'JetBrains Mono', monospace;
+      background: var(--bg);
+      color: var(--text);
+    }
+
+    body {
+      background:
+        radial-gradient(ellipse at 50% 40%, rgba(77,124,255,0.06) 0%, transparent 60%),
+        radial-gradient(ellipse at 20% 80%, rgba(139,92,246,0.04) 0%, transparent 50%),
+        radial-gradient(ellipse at 80% 20%, rgba(34,211,238,0.03) 0%, transparent 50%),
+        var(--bg);
+    }
+
+    /* ── Star field canvas (background) ───────────────────── */
+    #starfield {
+      position: fixed;
+      inset: 0;
+      z-index: 0;
+      pointer-events: none;
+    }
+
+    /* ── Main layout ──────────────────────────────────────── */
+    .cockpit {
+      position: relative;
+      z-index: 1;
+      width: 100%; height: 100vh;
+      display: grid;
+      grid-template-rows: 42px 1fr 170px;
+      gap: 6px;
+      padding: 6px;
+    }
+
+    /* ═══ HUD TOP BAR ═════════════════════════════════════════ */
+    .hud-top {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      padding: 0 16px;
+      background: var(--bg-surface);
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      backdrop-filter: blur(12px);
+    }
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-shrink: 0;
+    }
+    .brand h1 {
+      font-family: 'Space Grotesk', sans-serif;
+      font-size: 13px;
+      font-weight: 700;
+      letter-spacing: 0.18em;
+      color: var(--blue);
+      text-shadow: 0 0 12px rgba(var(--blue-rgb), 0.4);
+      white-space: nowrap;
+    }
+    .brand .sub {
+      font-size: 9px;
+      font-weight: 400;
+      letter-spacing: 0.12em;
+      color: var(--text-dim);
+    }
+    .led {
+      width: 8px; height: 8px;
+      border-radius: 50%;
+      background: var(--blue);
+      box-shadow: 0 0 8px var(--blue), 0 0 20px rgba(var(--blue-rgb), 0.3);
+      flex-shrink: 0;
+      animation: ledPulse 2s ease-in-out infinite;
+    }
+    .led.err {
+      background: var(--red);
+      box-shadow: 0 0 8px var(--red), 0 0 20px rgba(var(--red-rgb), 0.4);
+      animation: none;
+    }
+    @keyframes ledPulse {
+      0%, 100% { opacity: 1; }
+      50%      { opacity: 0.5; }
+    }
+
+    .hud-center {
+      flex: 1;
+      text-align: center;
+      font-size: 10px;
+      letter-spacing: 0.1em;
+    }
+    .hud-center .label { color: var(--text-dim); }
+    .hud-center .value { color: var(--blue); font-weight: 600; margin-left: 6px; }
+    .hud-center .value.err { color: var(--red); }
+
+    .hud-right {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      flex-shrink: 0;
+    }
+    .hud-right .uptime {
+      font-size: 9px;
+      color: var(--text-dim);
+      letter-spacing: 0.1em;
+    }
+    .hud-right .clock {
+      font-size: 11px;
+      font-weight: 600;
+      color: var(--purple-2);
+      letter-spacing: 0.05em;
+    }
+
+    .fw-badge {
+      display: none;
+      font-size: 9px;
+      font-weight: 700;
+      letter-spacing: 0.14em;
+      color: var(--amber);
+      border: 1px solid var(--amber);
+      padding: 2px 6px;
+      border-radius: 2px;
+      margin-left: 4px;
+      background: rgba(var(--gold-rgb), 0.06);
+      box-shadow: 0 0 8px rgba(var(--gold-rgb), 0.25);
+      cursor: help;
+      animation: fwPulse 3s ease-in-out infinite;
+    }
+    .fw-badge.show { display: inline-block; }
+    @keyframes fwPulse {
+      0%, 100% { box-shadow: 0 0 6px rgba(var(--gold-rgb), 0.2); }
+      50%      { box-shadow: 0 0 14px rgba(var(--gold-rgb), 0.5); }
+    }
+
+    .layout-btn, .theme-btn {
+      background: transparent;
+      border: 1px solid var(--border-str);
+      color: var(--purple);
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 9px;
+      font-weight: 600;
+      letter-spacing: 0.14em;
+      padding: 3px 8px;
+      cursor: pointer;
+      transition: all 0.25s;
+      border-radius: 2px;
+      text-transform: uppercase;
+      white-space: nowrap;
+    }
+    .layout-btn:hover, .theme-btn:hover {
+      background: var(--purple);
+      color: #000;
+      box-shadow: 0 0 16px var(--purple);
+    }
+
+    /* ═══ MAIN GRID (3-column) ════════════════════════════════ */
+    .main-grid {
+      display: grid;
+      grid-template-columns: 220px 1fr 220px;
+      gap: 6px;
+      min-height: 0;
+    }
+
+    /* ── Cards ─────────────────────────────────────────────── */
+    .card {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      padding: 12px 14px;
+      backdrop-filter: blur(8px);
+      position: relative;
+      overflow: hidden;
+    }
+    .card::before {
+      content: '';
+      position: absolute;
+      top: 0; left: 0; right: 0;
+      height: 1px;
+      background: linear-gradient(90deg, transparent, rgba(var(--blue-rgb), 0.3), transparent);
+    }
+    .card-label {
+      font-size: 9px;
+      font-weight: 600;
+      letter-spacing: 0.14em;
+      color: var(--text-dim);
+      margin-bottom: 6px;
+    }
+
+    /* ── Left column: VOIE 01 + export stats ──────────────── */
+    .voies-col {
+      display: grid;
+      grid-template-rows: 1.5fr 1fr;
+      gap: 6px;
+    }
+    .voie-value-big {
+      font-family: 'Space Grotesk', sans-serif;
+      font-size: clamp(28px, 4vw, 42px);
+      font-weight: 700;
+      color: var(--text);
+      text-shadow: 0 0 16px rgba(var(--blue-rgb), 0.3);
+      margin: 4px 0;
+      line-height: 1;
+    }
+    .voie-value-big sup {
+      font-size: 0.35em;
+      color: var(--text-dim);
+      font-weight: 400;
+      vertical-align: super;
+      margin-left: 2px;
+    }
+    .voie-bar-track {
+      height: 4px;
+      background: rgba(var(--blue-rgb), 0.1);
+      border-radius: 2px;
+      margin: 6px 0;
+      overflow: hidden;
+    }
+    .voie-bar-fill {
+      height: 100%;
+      width: 0%;
+      border-radius: 2px;
+      background: linear-gradient(90deg, var(--blue), var(--purple));
+      box-shadow: 0 0 10px rgba(var(--blue-rgb), 0.5);
+      transition: width 0.6s ease;
+    }
+    .voie-meta {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 4px;
+    }
+    .meta-cell { text-align: center; }
+    .meta-cell .m-label {
+      font-size: 8px;
+      color: var(--text-dim);
+      letter-spacing: 0.1em;
+    }
+    .meta-cell .m-val {
+      font-size: 11px;
+      font-weight: 600;
+      color: var(--text);
+    }
+
+    .stat-pair {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 6px;
+    }
+    .exp-pair {
+      grid-template-columns: 1fr 1fr;
+    }
+    .big-stat .big-val {
+      font-family: 'Space Grotesk', sans-serif;
+      font-size: 18px;
+      font-weight: 700;
+      color: var(--text);
+      line-height: 1.2;
+    }
+    .big-stat .arrow {
+      font-size: 14px;
+      margin-right: 2px;
+    }
+    .big-stat.down .arrow { color: var(--red); }
+    .big-stat.up   .arrow { color: var(--cyan); }
+    .big-stat .unit {
+      font-size: 8px;
+      color: var(--text-dim);
+      letter-spacing: 0.1em;
+      margin-top: 2px;
+    }
+
+    .mid-val {
+      font-family: 'Space Grotesk', sans-serif;
+      font-size: 16px;
+      font-weight: 700;
+      color: var(--text);
+    }
+    .mid-unit {
+      font-size: 8px;
+      color: var(--text-dim);
+      letter-spacing: 0.1em;
+    }
+
+    /* ── Center: GAUGE ────────────────────────────────────── */
+    .gauge-wrap {
+      position: relative;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 0;
+      overflow: hidden;
+    }
+    .gauge-wrap canvas {
+      position: absolute;
+      inset: 0;
+    }
+    .gauge-readout {
+      position: absolute;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      pointer-events: none;
+      z-index: 2;
+    }
+    .gauge-value {
+      font-family: 'Space Grotesk', sans-serif;
+      font-size: clamp(42px, 8vw, 80px);
+      font-weight: 800;
+      line-height: 1;
+      color: var(--text);
+      text-shadow: 0 0 30px rgba(var(--blue-rgb), 0.4);
+      transition: text-shadow 0.5s;
+    }
+    .gauge-value sup {
+      font-size: 0.28em;
+      color: var(--text-dim);
+      font-weight: 400;
+      vertical-align: super;
+      margin-left: 3px;
+    }
+    .gauge-value.importing {
+      text-shadow: 0 0 30px rgba(var(--red-rgb), 0.5), 0 0 60px rgba(var(--red-rgb), 0.2);
+    }
+    .gauge-value.exporting {
+      text-shadow: 0 0 30px rgba(var(--cyan-rgb), 0.5), 0 0 60px rgba(var(--cyan-rgb), 0.2);
+    }
+    .gauge-state {
+      font-size: 11px;
+      font-weight: 600;
+      letter-spacing: 0.22em;
+      color: var(--text-dim);
+      margin-top: 6px;
+    }
+    .gauge-state.importing { color: var(--red); text-shadow: 0 0 10px rgba(var(--red-rgb), 0.4); }
+    .gauge-state.exporting { color: var(--cyan); text-shadow: 0 0 10px rgba(var(--cyan-rgb), 0.4); }
+
+    .gauge-hud-title {
+      position: absolute;
+      top: 12px; left: 50%;
+      transform: translateX(-50%);
+      font-size: 10px;
+      font-weight: 600;
+      letter-spacing: 0.18em;
+      color: var(--text-dim);
+      z-index: 3;
+      white-space: nowrap;
+    }
+    .gauge-hud-title .on {
+      color: var(--blue);
+      margin-left: 8px;
+      font-size: 9px;
+    }
+
+    /* ── Right column: stats ──────────────────────────────── */
+    .stats-col {
+      display: grid;
+      grid-template-rows: 1fr 1fr 1fr;
+      gap: 6px;
+    }
+
+    /* ═══ BOTTOM: TELEMETRY ═══════════════════════════════════ */
+    .telemetry {
+      display: grid;
+      grid-template-rows: auto 1fr;
+      background: var(--bg-surface);
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      backdrop-filter: blur(12px);
+      overflow: hidden;
+    }
+    .tel-header {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      padding: 6px 14px;
+      border-bottom: 1px solid var(--border);
+      flex-wrap: wrap;
+    }
+    .tel-title {
+      font-size: 10px;
+      font-weight: 600;
+      letter-spacing: 0.14em;
+      color: var(--purple);
+    }
+    .tel-stats {
+      display: flex;
+      gap: 14px;
+    }
+    .tstat {
+      font-size: 9px;
+      color: var(--text-dim);
+      letter-spacing: 0.08em;
+    }
+    .tstat b { font-weight: 700; }
+    .tstat.min b { color: var(--cyan); }
+    .tstat.max b { color: var(--red); }
+    .tstat.avg b { color: var(--gold); }
+
+    .dev-health {
+      display: flex;
+      gap: 14px;
+      margin-left: auto;
+    }
+    .dev-health .dh {
+      font-size: 9px;
+      color: var(--text-dim);
+      letter-spacing: 0.08em;
+      white-space: nowrap;
+    }
+    .dev-health .dh .lbl { margin: 0 3px; }
+    .dev-health .dh b {
+      font-weight: 700;
+      color: var(--text);
+    }
+    .dev-health .dh.freq b { color: var(--blue); text-shadow: 0 0 6px rgba(var(--blue-rgb), 0.3); }
+    .dev-health .dh.temp b.warm { color: var(--amber); }
+    .dev-health .dh.temp b.hot  { color: var(--red); }
+    .dev-health .dh.rssi b.weak { color: var(--amber); }
+    .dev-health .dh.rssi b.bad  { color: var(--red); }
+    .dev-health .dh.fw .upd {
+      color: var(--amber);
+      text-shadow: 0 0 6px rgba(var(--gold-rgb), 0.4);
+      margin-left: 4px;
+    }
+
+    .tel-settings {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      margin-left: 12px;
+      font-size: 9px;
+      color: var(--text-dim);
+      letter-spacing: 0.08em;
+    }
+    .tel-settings label { white-space: nowrap; }
+    .tel-settings input {
+      width: 60px;
+      background: rgba(var(--blue-rgb), 0.08);
+      border: 1px solid var(--border);
+      color: var(--text);
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 9px;
+      padding: 2px 6px;
+      border-radius: 2px;
+      outline: none;
+    }
+    .tel-settings input:focus {
+      border-color: var(--blue);
+      box-shadow: 0 0 6px rgba(var(--blue-rgb), 0.3);
+    }
+    .tel-settings button {
+      background: rgba(var(--blue-rgb), 0.12);
+      border: 1px solid var(--border-str);
+      color: var(--blue);
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 8px;
+      font-weight: 600;
+      letter-spacing: 0.1em;
+      padding: 2px 8px;
+      cursor: pointer;
+      border-radius: 2px;
+      transition: all 0.2s;
+    }
+    .tel-settings button:hover {
+      background: var(--blue);
+      color: #000;
+    }
+    .saved-ok {
+      color: var(--cyan);
+      font-weight: 700;
+      opacity: 0;
+      transition: opacity 0.3s;
+    }
+    .saved-ok.show { opacity: 1; }
+
+    .chart-area {
+      position: relative;
+      min-height: 0;
+    }
+    .chart-area canvas {
+      position: absolute !important;
+      inset: 0;
+    }
+
+    /* ═══ Responsive ══════════════════════════════════════════ */
+    @media (max-width: 1100px) {
+      .main-grid { grid-template-columns: 200px 1fr 200px; }
+    }
+    @media (max-width: 900px) {
+      .main-grid { grid-template-columns: 175px 1fr 175px; }
+      .brand .sub { display: none; }
+    }
+    @media (max-height: 720px) {
+      .cockpit { grid-template-rows: 40px 1fr 140px; }
+    }
+    @media (max-height: 640px) {
+      .cockpit { grid-template-rows: 38px 1fr 120px; }
+    }
+
+    /* ═══ Pi 7" touchscreen (800x480) ═════════════════════════ */
+    @media (max-width: 820px) and (max-height: 500px) {
+      .cockpit { grid-template-rows: 34px 1fr 95px; gap: 3px; padding: 3px; }
+      .main-grid { grid-template-columns: 140px 1fr 140px; gap: 3px; }
+      .brand h1 { font-size: 10px; }
+      .brand .sub, .fw-badge { display: none; }
+      .hud-top { padding: 0 8px; gap: 6px; }
+      .hud-center .label { font-size: 8px; }
+      .hud-center .value { font-size: 9px; }
+      .hud-right .uptime { font-size: 8px; }
+      .hud-right .clock { font-size: 9px; }
+
+      .voies-col { grid-template-rows: 1.4fr 1fr; gap: 3px; }
+      .voie-value-big { font-size: clamp(18px, 5vw, 26px); margin: 2px 0; }
+      .voie-value-big sup { font-size: 0.3em; }
+      .card { padding: 6px 8px; }
+      .card-label { font-size: 7px; margin-bottom: 3px; }
+      .big-stat .big-val { font-size: 14px; }
+      .big-stat .unit { font-size: 7px; }
+      .mid-val { font-size: 13px; }
+      .meta-cell .m-label { font-size: 7px; }
+      .meta-cell .m-val { font-size: 9px; }
+
+      .gauge-value { font-size: clamp(28px, 6vw, 42px); }
+      .gauge-state { font-size: 8px; margin-top: 3px; }
+      .gauge-hud-title { font-size: 8px; top: 6px; }
+
+      .tel-header { padding: 3px 8px; gap: 8px; }
+      .tel-title { font-size: 8px; }
+      .tstat { font-size: 8px; }
+      .dev-health { gap: 8px; }
+      .dev-health .dh { font-size: 8px; }
+      .tel-settings { font-size: 8px; }
+    }
+
+    /* ═══ Electron ═══════════════════════════════════════════ */
+    body.is-electron .hud-top { -webkit-app-region: drag; }
+    body.is-electron .hud-top .no-drag { -webkit-app-region: no-drag; }
+
+    .win-ctrls {
+      display: none;
+      gap: 4px;
+      margin-left: 14px;
+      padding-left: 14px;
+      border-left: 1px solid var(--border);
+      align-items: center;
+    }
+    body.is-electron .win-ctrls { display: flex; }
+    .win-btn {
+      width: 28px; height: 22px;
+      display: inline-flex; align-items: center; justify-content: center;
+      background: transparent;
+      border: 1px solid var(--border);
+      color: var(--text-dim);
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 11px;
+      cursor: pointer;
+      border-radius: 2px;
+      transition: all 0.15s;
+    }
+    .win-btn:hover {
+      color: var(--blue);
+      border-color: var(--blue);
+      box-shadow: 0 0 8px rgba(var(--blue-rgb), 0.35);
+      background: rgba(var(--blue-rgb), 0.05);
+    }
+    .win-btn.close:hover {
+      color: var(--red);
+      border-color: var(--red);
+      box-shadow: 0 0 8px rgba(var(--red-rgb), 0.4);
+      background: rgba(var(--red-rgb), 0.06);
+    }
+    .win-btn svg { width: 11px; height: 11px; stroke: currentColor; stroke-width: 1.6; fill: none; }
+  </style>
+</head>
+<body>
+
+<!-- Star field background -->
+<canvas id="starfield"></canvas>
+
+<div class="cockpit">
+
+  <!-- ═══ HUD TOP ═══════════════════════════════════════════ -->
+  <header class="hud-top">
+    <div class="brand">
+      <span class="led" id="led"></span>
+      <h1>&#9889; POWER STATION</h1>
+      <span class="sub">ORBITAL CONTROL</span>
+      <span class="fw-badge" id="fwBadge" title="Mise a jour firmware Shelly disponible">&#8593; FW</span>
+    </div>
+    <div class="hud-center">
+      <span class="label">STATUS //</span>
+      <span class="value" id="statusLabel">INIT...</span>
+    </div>
+    <div class="hud-right">
+      <span class="uptime">T+<span id="uptime">00:00:00</span></span>
+      <span class="clock" id="clock">--:--:--</span>
+      <button class="layout-btn no-drag" onclick="window.location.href='brutal.html'" title="Changer de layout">LAYOUT</button>
+      <div class="win-ctrls no-drag">
+        <button class="win-btn" id="btnWidget" title="Basculer mode widget (Ctrl+Alt+W)">
+          <svg viewBox="0 0 12 12"><rect x="1" y="1" width="10" height="10"/><rect x="7" y="7" width="4" height="4" fill="currentColor"/></svg>
+        </button>
+        <button class="win-btn" id="btnMin" title="Reduire">
+          <svg viewBox="0 0 12 12"><line x1="2" y1="10" x2="10" y2="10"/></svg>
+        </button>
+        <button class="win-btn close" id="btnClose" title="Masquer dans le tray">
+          <svg viewBox="0 0 12 12"><line x1="2" y1="2" x2="10" y2="10"/><line x1="10" y1="2" x2="2" y2="10"/></svg>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- ═══ MAIN GRID ═════════════════════════════════════════ -->
+  <div class="main-grid">
+
+    <!-- ── LEFT: VOIE + EXPORT STATS ── -->
+    <aside class="voies-col">
+      <div class="card" id="card-c0">
+        <div class="card-label">VOIE 01 // CH-A</div>
+        <div class="voie-value-big" id="c0-w">0<sup>W</sup></div>
+        <div class="voie-bar-track"><div class="voie-bar-fill" id="c0-bar"></div></div>
+        <div class="voie-meta">
+          <div class="meta-cell"><div class="m-label">V</div><div class="m-val" id="c0-v">&mdash;</div></div>
+          <div class="meta-cell"><div class="m-label">A</div><div class="m-val" id="c0-a">&mdash;</div></div>
+          <div class="meta-cell"><div class="m-label">PF</div><div class="m-val" id="c0-pf">&mdash;</div></div>
+          <div class="meta-cell"><div class="m-label">VA</div><div class="m-val" id="c0-va">&mdash;</div></div>
+        </div>
+      </div>
+      <div class="stat-pair exp-pair">
+        <div class="card big-stat up">
+          <div class="card-label">7D EXPORT</div>
+          <div class="big-val"><span class="arrow">&#8593;</span><span id="kwh-exp-week">0.0</span></div>
+          <div class="unit">KWH TO GRID</div>
+        </div>
+        <div class="card big-stat up">
+          <div class="card-label">30D EXPORT</div>
+          <div class="big-val"><span class="arrow">&#8593;</span><span id="kwh-exp-month">0.0</span></div>
+          <div class="unit">KWH TO GRID</div>
+        </div>
+      </div>
+    </aside>
+
+    <!-- ── CENTER: ORBITAL GAUGE ── -->
+    <section class="gauge-wrap" id="gaugeWrap">
+      <div class="gauge-hud-title">ORBITAL FLOW<span class="on">&#9679; LIVE</span></div>
+      <canvas id="mainGauge"></canvas>
+      <div class="gauge-readout">
+        <div class="gauge-value" id="gaugeValue"><span id="gvNum">0</span><sup>W</sup></div>
+        <div class="gauge-state" id="gaugeState">&#9473; STANDBY &#9473;</div>
+      </div>
+    </section>
+
+    <!-- ── RIGHT: STATS ── -->
+    <aside class="stats-col">
+      <div class="card big-stat down">
+        <div class="card-label">TODAY // GRID IMPORT</div>
+        <div class="big-val"><span class="arrow">&#8595;</span><span id="kwh-imp">0.00</span></div>
+        <div class="unit">KWH FROM GRID</div>
+      </div>
+      <div class="card big-stat up">
+        <div class="card-label">TODAY // SOLAR EXPORT</div>
+        <div class="big-val"><span class="arrow">&#8593;</span><span id="kwh-exp">0.00</span></div>
+        <div class="unit">KWH TO GRID</div>
+      </div>
+      <div class="stat-pair">
+        <div class="card">
+          <div class="card-label">7D NET</div>
+          <div class="mid-val" id="kwh-week">0.0</div>
+          <div class="mid-unit">KWH</div>
+        </div>
+        <div class="card">
+          <div class="card-label">30D NET</div>
+          <div class="mid-val" id="kwh-month">0.0</div>
+          <div class="mid-unit">KWH</div>
+        </div>
+      </div>
+    </aside>
+
+  </div>
+
+  <!-- ═══ BOTTOM: TELEMETRY ═════════════════════════════════ -->
+  <footer class="telemetry">
+    <div class="tel-header">
+      <div class="tel-title">24H ORBITAL TELEMETRY</div>
+      <div class="tel-stats">
+        <div class="tstat min">MIN <b id="stat-min">0</b> W</div>
+        <div class="tstat max">MAX <b id="stat-max">0</b> W</div>
+        <div class="tstat avg">AVG <b id="stat-avg">0</b> W</div>
+      </div>
+      <div class="dev-health" id="devHealth">
+        <div class="dh freq"><span class="lbl">FREQ</span><b id="dh-freq">&mdash;</b><span class="lbl">Hz</span></div>
+        <div class="dh temp"><span class="lbl">TEMP</span><b id="dh-temp">&mdash;</b><span class="lbl">&deg;C</span></div>
+        <div class="dh rssi"><span class="lbl">RSSI</span><b id="dh-rssi">&mdash;</b><span class="lbl">dBm</span></div>
+        <div class="dh up"><span class="lbl">UP</span><b id="dh-uptime">&mdash;</b></div>
+        <div class="dh fw"><span class="lbl">FW</span><b id="dh-fw">&mdash;</b><span class="upd" id="dh-fw-upd"></span></div>
+      </div>
+      <div class="tel-settings">
+        <label>ALERT THRESHOLD</label>
+        <input type="number" id="alertInput" step="100" min="100">
+        <button onclick="saveAlert()">SET</button>
+        <span class="saved-ok" id="savedOk">&#10003;</span>
+      </div>
+    </div>
+    <div class="chart-area"><canvas id="chart"></canvas></div>
+  </footer>
+
+</div>
+
+<script>
+// ══════════════════════════════════════════════════════════
+// POWER STATION · ORBITAL CONTROL
+// ══════════════════════════════════════════════════════════
+
+const MAX_CH_W    = 3680;
+const MAX_TOTAL_W = 7360;
+const startTime   = Date.now();
+const TWO_PI      = Math.PI * 2;
+
+let alertThreshold = 5000;
+let histChart      = null;
+
+// ── Clock ────────────────────────────────────────────────
+function tickClock() {
+  const now = new Date();
+  document.getElementById('clock').textContent = now.toLocaleTimeString('fr-FR');
+}
+setInterval(tickClock, 1000);
+tickClock();
+
+// ── Format helpers ───────────────────────────────────────
+const fr = v => typeof v === 'number' ? v.toLocaleString('fr-FR') : '\u2014';
+function f(v, dec = 1, unit = '') {
+  if (v == null || isNaN(v)) return '\u2014';
+  return v.toFixed(dec) + (unit ? '\u202f' + unit : '');
+}
+
+// ══════════════════════════════════════════════════════════
+// STAR FIELD — animated background
+// ══════════════════════════════════════════════════════════
+const sfCvs = document.getElementById('starfield');
+const sfCtx = sfCvs.getContext('2d');
+const stars = [];
+const STAR_COUNT = 120;
+
+function sizeStarfield() {
+  const dpr = window.devicePixelRatio || 1;
+  sfCvs.width  = window.innerWidth * dpr;
+  sfCvs.height = window.innerHeight * dpr;
+  sfCvs.style.width  = window.innerWidth + 'px';
+  sfCvs.style.height = window.innerHeight + 'px';
+  sfCtx.setTransform(dpr, 0, 0, dpr, 0, 0);
+}
+
+function initStars() {
+  stars.length = 0;
+  for (let i = 0; i < STAR_COUNT; i++) {
+    stars.push({
+      x: Math.random() * window.innerWidth,
+      y: Math.random() * window.innerHeight,
+      size: 0.4 + Math.random() * 1.6,
+      alpha: 0.1 + Math.random() * 0.6,
+      twinkleSpeed: 0.003 + Math.random() * 0.008,
+      twinklePhase: Math.random() * TWO_PI,
+    });
+  }
+}
+
+function drawStars(time) {
+  sfCtx.clearRect(0, 0, window.innerWidth, window.innerHeight);
+  for (const s of stars) {
+    const alpha = s.alpha * (0.5 + 0.5 * Math.sin(time * s.twinkleSpeed + s.twinklePhase));
+    sfCtx.beginPath();
+    sfCtx.arc(s.x, s.y, s.size, 0, TWO_PI);
+    sfCtx.fillStyle = `rgba(200, 210, 255, ${alpha})`;
+    sfCtx.fill();
+  }
+}
+
+sizeStarfield();
+initStars();
+window.addEventListener('resize', () => { sizeStarfield(); initStars(); });
+
+// ══════════════════════════════════════════════════════════
+// WebSocket
+// ══════════════════════════════════════════════════════════
+let ws;
+function connect() {
+  ws = new WebSocket(`ws://${location.host}`);
+  ws.onopen    = () => setStatus(true);
+  ws.onclose   = () => { setStatus(false); setTimeout(connect, 3000); };
+  ws.onerror   = () => ws.close();
+  ws.onmessage = e => {
+    const msg = JSON.parse(e.data);
+    if (msg.type === 'live')  updateLive(msg.data);
+    if (msg.type === 'error') setStatus(false, msg.msg);
+  };
+}
+connect();
+
+function setStatus(ok, label = '') {
+  document.getElementById('led').className = 'led' + (ok ? '' : ' err');
+  const lbl = document.getElementById('statusLabel');
+  lbl.className = 'value' + (ok ? '' : ' err');
+  lbl.textContent = ok
+    ? 'ONLINE \u00b7 NOMINAL'
+    : ('OFFLINE' + (label ? ' // ' + label.toUpperCase().slice(0, 40) : ''));
+}
+
+// ══════════════════════════════════════════════════════════
+// ORBITAL GAUGE — full 360° ring with orbiting particles
+// ══════════════════════════════════════════════════════════
+const gCvs = document.getElementById('mainGauge');
+const gCtx = gCvs.getContext('2d');
+
+const gauge = {
+  current: 0,
+  target:  0,
+  max:     MAX_TOTAL_W,
+  particles:   [],
+  w: 0, h: 0, cx: 0, cy: 0, r: 0,
+};
+
+// Full circle: 0 at top (12 o'clock), clockwise = import, CCW = export
+const TOP = -Math.PI / 2; // 12 o'clock
+
+function sizeGauge() {
+  const wrap = gCvs.parentElement;
+  const w = wrap.clientWidth;
+  const h = wrap.clientHeight;
+  if (!w || !h) return;
+  const dpr = window.devicePixelRatio || 1;
+  gCvs.width  = w * dpr;
+  gCvs.height = h * dpr;
+  gCvs.style.width  = w + 'px';
+  gCvs.style.height = h + 'px';
+  gCtx.setTransform(dpr, 0, 0, dpr, 0, 0);
+
+  gauge.w = w;
+  gauge.h = h;
+  gauge.cx = w / 2;
+  gauge.cy = h / 2;
+  gauge.r  = Math.min(w / 2, h / 2) - 30;
+}
+window.addEventListener('resize', sizeGauge);
+setTimeout(sizeGauge, 60);
+setTimeout(sizeGauge, 300);
+
+// ── Orbital particles ────────────────────────────────────
+function spawnOrbitalParticle() {
+  const ratio = gauge.current / gauge.max;
+  const absR  = Math.abs(ratio);
+  if (absR < 0.015) return;
+  const direction = ratio > 0 ? 1 : -1;
+  const isExport  = direction < 0;
+  const angle     = Math.random() * TWO_PI;
+  const spread    = 8 + Math.random() * 12;
+
+  gauge.particles.push({
+    angle,
+    angleSpeed: direction * (0.008 + Math.random() * 0.025) * (0.5 + absR),
+    radius: gauge.r - 22 + (Math.random() - 0.5) * spread,
+    life:   1,
+    decay:  0.006 + Math.random() * 0.012,
+    size:   0.6 + Math.random() * 2.5,
+    r: isExport ? 34 : 255,
+    g: isExport ? 211 : Math.floor(77 + Math.random() * 60),
+    b: isExport ? 238 : 77,
+  });
+}
+
+function updateParticles() {
+  const intensity = Math.abs(gauge.current) / gauge.max;
+  if (gauge.particles.length < 100) {
+    const n = Math.ceil(intensity * 4);
+    for (let i = 0; i < n; i++) {
+      if (Math.random() < 0.6) spawnOrbitalParticle();
+    }
+  }
+  for (const p of gauge.particles) {
+    p.angle += p.angleSpeed;
+    p.life  -= p.decay;
+  }
+  gauge.particles = gauge.particles.filter(p => p.life > 0);
+}
+
+function drawGauge(time) {
+  const { cx, cy, r, current, max, w, h } = gauge;
+  if (!r) return;
+  gCtx.clearRect(0, 0, w, h);
+
+  const ratio = Math.max(-1, Math.min(1, current / max));
+  const absRatio = Math.abs(ratio);
+  const isImport = ratio > 0;
+  const isExport = ratio < 0;
+
+  // Colors
+  const blueRGB  = '77, 124, 255';
+  const purpRGB  = '139, 92, 246';
+  const cyanRGB  = '34, 211, 238';
+  const redRGB   = '255, 77, 77';
+  const goldRGB  = '251, 191, 36';
+  const activeRGB = isExport ? cyanRGB : (isImport ? redRGB : blueRGB);
+  const activeColor = isExport ? '#22d3ee' : (isImport ? '#ff4d4d' : '#4d7cff');
+
+  // ── Outer ring glow (ambient)
+  const glowIntensity = 0.08 + absRatio * 0.25;
+  gCtx.save();
+  gCtx.beginPath();
+  gCtx.arc(cx, cy, r + 4, 0, TWO_PI);
+  gCtx.strokeStyle = `rgba(${activeRGB}, ${glowIntensity})`;
+  gCtx.lineWidth = 2;
+  gCtx.shadowColor = `rgba(${activeRGB}, ${glowIntensity * 1.5})`;
+  gCtx.shadowBlur = 20 + absRatio * 30;
+  gCtx.stroke();
+  gCtx.restore();
+
+  // ── Tick marks (60 ticks, major every 5th = 12 major)
+  const TICKS = 60;
+  for (let i = 0; i < TICKS; i++) {
+    const t = i / TICKS;
+    const angle = TOP + t * TWO_PI;
+    const isMajor = i % 5 === 0;
+    const len = isMajor ? 14 : 5;
+    const alpha = isMajor ? 0.7 : 0.2;
+
+    const r1 = r;
+    const r2 = r - len;
+    const sx = cx + r1 * Math.cos(angle);
+    const sy = cy + r1 * Math.sin(angle);
+    const ex = cx + r2 * Math.cos(angle);
+    const ey = cy + r2 * Math.sin(angle);
+
+    gCtx.beginPath();
+    gCtx.moveTo(sx, sy);
+    gCtx.lineTo(ex, ey);
+    gCtx.strokeStyle = `rgba(${blueRGB}, ${alpha})`;
+    gCtx.lineWidth = isMajor ? 2 : 1;
+    gCtx.stroke();
+  }
+
+  // ── Main ring background track
+  const arcR = r - 22;
+  const arcW = Math.max(14, r * 0.1);
+
+  gCtx.beginPath();
+  gCtx.arc(cx, cy, arcR, 0, TWO_PI);
+  gCtx.strokeStyle = 'rgba(16, 14, 40, 0.9)';
+  gCtx.lineWidth = arcW + 2;
+  gCtx.stroke();
+
+  // Faint base ring
+  gCtx.beginPath();
+  gCtx.arc(cx, cy, arcR, 0, TWO_PI);
+  gCtx.strokeStyle = `rgba(${blueRGB}, 0.06)`;
+  gCtx.lineWidth = arcW;
+  gCtx.stroke();
+
+  // ── Active fill arc (from 12 o'clock, clockwise for import, CCW for export)
+  if (Math.abs(current) > 2) {
+    const fillAngle = absRatio * TWO_PI;
+    const startA = TOP;
+    let endA;
+    if (isImport) {
+      endA = TOP + fillAngle;
+    } else {
+      endA = TOP - fillAngle;
+    }
+
+    // Glow layer
+    gCtx.save();
+    gCtx.shadowColor = activeColor;
+    gCtx.shadowBlur  = 20 + absRatio * 40;
+    gCtx.beginPath();
+    if (isImport || !isExport) {
+      gCtx.arc(cx, cy, arcR, startA, endA, isExport);
+    } else {
+      gCtx.arc(cx, cy, arcR, endA, startA, false);
+    }
+    gCtx.strokeStyle = activeColor;
+    gCtx.lineWidth = arcW;
+    gCtx.lineCap = 'round';
+    gCtx.stroke();
+    gCtx.restore();
+
+    // Inner bright highlight
+    gCtx.save();
+    gCtx.beginPath();
+    if (isImport || !isExport) {
+      gCtx.arc(cx, cy, arcR, startA, endA, isExport);
+    } else {
+      gCtx.arc(cx, cy, arcR, endA, startA, false);
+    }
+    gCtx.strokeStyle = 'rgba(255, 255, 255, 0.3)';
+    gCtx.lineWidth = arcW * 0.25;
+    gCtx.lineCap = 'round';
+    gCtx.stroke();
+    gCtx.restore();
+
+    // Leading edge glow dot
+    const tipAngle = isImport ? endA : endA;
+    const tipX = cx + arcR * Math.cos(isImport ? endA : (TOP - fillAngle));
+    const tipY = cy + arcR * Math.sin(isImport ? endA : (TOP - fillAngle));
+    const tipGlow = gCtx.createRadialGradient(tipX, tipY, 0, tipX, tipY, arcW * 1.2);
+    tipGlow.addColorStop(0, `rgba(255, 255, 255, ${0.5 + absRatio * 0.3})`);
+    tipGlow.addColorStop(0.4, `rgba(${activeRGB}, ${0.3 + absRatio * 0.3})`);
+    tipGlow.addColorStop(1, 'transparent');
+    gCtx.beginPath();
+    gCtx.arc(tipX, tipY, arcW * 1.2, 0, TWO_PI);
+    gCtx.fillStyle = tipGlow;
+    gCtx.fill();
+  }
+
+  // ── Zero marker at 12 o'clock (bright line)
+  gCtx.save();
+  gCtx.shadowColor = '#fbbf24';
+  gCtx.shadowBlur = 12;
+  const zR1 = arcR - arcW / 2 - 4;
+  const zR2 = arcR + arcW / 2 + 4;
+  gCtx.beginPath();
+  gCtx.moveTo(cx + zR1 * Math.cos(TOP), cy + zR1 * Math.sin(TOP));
+  gCtx.lineTo(cx + zR2 * Math.cos(TOP), cy + zR2 * Math.sin(TOP));
+  gCtx.strokeStyle = '#fbbf24';
+  gCtx.lineWidth = 2.5;
+  gCtx.stroke();
+  gCtx.restore();
+
+  // ── Scale labels around the ring
+  gCtx.font = '600 9px "JetBrains Mono", monospace';
+  gCtx.textAlign = 'center';
+  gCtx.textBaseline = 'middle';
+  const labelR = r + 18;
+  const scaleLabels = [
+    { pos: 0,    t: '0',     c: `rgba(${goldRGB}, 0.9)` },
+    { pos: 0.25, t: '+3.7k', c: `rgba(${redRGB}, 0.6)` },
+    { pos: 0.5,  t: '+7.4k', c: `rgba(${redRGB}, 0.85)` },
+    { pos: -0.25,t: '-3.7k', c: `rgba(${cyanRGB}, 0.6)` },
+    { pos: -0.5, t: '-7.4k', c: `rgba(${cyanRGB}, 0.85)` },
+  ];
+  for (const l of scaleLabels) {
+    const a = TOP + l.pos * TWO_PI;
+    gCtx.fillStyle = l.c;
+    gCtx.fillText(l.t, cx + labelR * Math.cos(a), cy + labelR * Math.sin(a));
+  }
+
+  // ── Orbiting particles
+  for (const p of gauge.particles) {
+    const px = cx + p.radius * Math.cos(p.angle);
+    const py = cy + p.radius * Math.sin(p.angle);
+    const alpha = p.life * (0.4 + absRatio * 0.5);
+    gCtx.beginPath();
+    gCtx.arc(px, py, p.size, 0, TWO_PI);
+    gCtx.fillStyle = `rgba(${p.r}, ${p.g}, ${p.b}, ${alpha})`;
+    gCtx.fill();
+
+    // Tiny trail
+    if (p.size > 1.2) {
+      const trailAngle = p.angle - p.angleSpeed * 4;
+      const tx = cx + p.radius * Math.cos(trailAngle);
+      const ty = cy + p.radius * Math.sin(trailAngle);
+      gCtx.beginPath();
+      gCtx.moveTo(px, py);
+      gCtx.lineTo(tx, ty);
+      gCtx.strokeStyle = `rgba(${p.r}, ${p.g}, ${p.b}, ${alpha * 0.3})`;
+      gCtx.lineWidth = p.size * 0.5;
+      gCtx.stroke();
+    }
+  }
+
+  // ── Pulsing inner glow circle
+  const pulseAlpha = 0.02 + absRatio * 0.06 * (0.7 + 0.3 * Math.sin(time * 0.002));
+  const innerGlow = gCtx.createRadialGradient(cx, cy, 0, cx, cy, arcR - arcW);
+  innerGlow.addColorStop(0, `rgba(${activeRGB}, ${pulseAlpha * 1.5})`);
+  innerGlow.addColorStop(0.6, `rgba(${activeRGB}, ${pulseAlpha * 0.5})`);
+  innerGlow.addColorStop(1, 'transparent');
+  gCtx.beginPath();
+  gCtx.arc(cx, cy, arcR - arcW, 0, TWO_PI);
+  gCtx.fillStyle = innerGlow;
+  gCtx.fill();
+}
+
+// ── Animation loop ───────────────────────────────────────
+function animationLoop(time) {
+  // Lerp gauge
+  gauge.current += (gauge.target - gauge.current) * 0.09;
+
+  updateParticles();
+  drawStars(time);
+  drawGauge(time);
+
+  // Update center readout
+  const val = Math.round(gauge.current);
+  const absVal = Math.abs(val);
+  document.getElementById('gvNum').textContent = fr(absVal);
+
+  const gv = document.getElementById('gaugeValue');
+  const gs = document.getElementById('gaugeState');
+
+  if (absVal < 5) {
+    gv.className = 'gauge-value';
+    gs.className = 'gauge-state';
+    gs.textContent = '\u2501 EQUILIBRIUM \u2501';
+  } else if (val < 0) {
+    gv.className = 'gauge-value exporting';
+    gs.className = 'gauge-state exporting';
+    gs.textContent = '\u25B2 SOLAR EXPORT \u25B2';
+  } else {
+    gv.className = 'gauge-value importing';
+    gs.className = 'gauge-state importing';
+    gs.textContent = '\u25BC GRID IMPORT \u25BC';
+  }
+
+  requestAnimationFrame(animationLoop);
+}
+requestAnimationFrame(animationLoop);
+
+// ══════════════════════════════════════════════════════════
+// LIVE DATA UPDATE
+// ══════════════════════════════════════════════════════════
+function updateLive(d) {
+  setStatus(true);
+
+  const totalW = d.total_w || 0;
+  gauge.target = totalW;
+
+  // Channel 0
+  const c = d.channels && d.channels['0'];
+  if (c) {
+    const w = Math.round(c.w || 0);
+    document.getElementById('c0-w').innerHTML = fr(Math.abs(w)) + '<sup>W</sup>';
+    document.getElementById('c0-v').textContent = f(c.v, 1);
+    document.getElementById('c0-a').textContent = f(c.a, 2);
+    document.getElementById('c0-pf').textContent = f(c.pf, 2);
+    document.getElementById('c0-va').textContent = f(c.va, 0);
+    const pct = Math.min(100, Math.abs(w) / MAX_CH_W * 100);
+    document.getElementById('c0-bar').style.width = pct + '%';
+  }
+
+  // Device health
+  if (d.freq != null) {
+    document.getElementById('dh-freq').textContent = f(d.freq, 1);
+  }
+  if (d.device) {
+    const dev = d.device;
+    if (dev.temp_c != null) {
+      const tb = document.getElementById('dh-temp');
+      tb.textContent = f(dev.temp_c, 1);
+      tb.className = dev.temp_c > 60 ? 'hot' : dev.temp_c > 45 ? 'warm' : '';
+    }
+    if (dev.wifi_rssi != null) {
+      const rb = document.getElementById('dh-rssi');
+      rb.textContent = dev.wifi_rssi;
+      rb.className = dev.wifi_rssi < -75 ? 'bad' : dev.wifi_rssi < -60 ? 'weak' : '';
+    }
+    if (dev.uptime_s != null) {
+      const s = dev.uptime_s;
+      const dd = Math.floor(s / 86400);
+      const hh = Math.floor((s % 86400) / 3600);
+      const mm = Math.floor((s % 3600) / 60);
+      document.getElementById('dh-uptime').textContent = dd > 0
+        ? `${dd}d ${hh}h`
+        : `${hh}h ${String(mm).padStart(2, '0')}m`;
+      document.getElementById('uptime').textContent =
+        `${String(hh).padStart(2, '0')}:${String(mm).padStart(2, '0')}:${String(s % 60 | 0).padStart(2, '0')}`;
+    }
+    if (dev.fw_current) {
+      document.getElementById('dh-fw').textContent = dev.fw_current;
+      if (dev.fw_available && dev.fw_available !== dev.fw_current) {
+        document.getElementById('dh-fw-upd').textContent = '\u2192 ' + dev.fw_available;
+        document.getElementById('fwBadge').classList.add('show');
+      }
+    }
+  }
+}
+
+// ══════════════════════════════════════════════════════════
+// REST: Stats + History + Settings
+// ══════════════════════════════════════════════════════════
+async function loadStats() {
+  try {
+    const r = await fetch('/api/stats');
+    const s = await r.json();
+    document.getElementById('kwh-imp').textContent      = f(s.kwh_imp_today, 2);
+    document.getElementById('kwh-exp').textContent       = f(s.kwh_exp_today, 2);
+    document.getElementById('kwh-week').textContent      = f(s.kwh_week, 1);
+    document.getElementById('kwh-month').textContent     = f(s.kwh_month, 1);
+    document.getElementById('kwh-exp-week').textContent  = f(s.kwh_exp_week, 1);
+    document.getElementById('kwh-exp-month').textContent = f(s.kwh_exp_month, 1);
+    document.getElementById('stat-min').textContent      = fr(s.today_min);
+    document.getElementById('stat-max').textContent      = fr(s.today_max);
+    document.getElementById('stat-avg').textContent      = fr(s.today_avg);
+  } catch (e) { /* retry next interval */ }
+}
+
+async function loadHistory() {
+  try {
+    const r = await fetch('/api/history');
+    const rows = await r.json();
+    if (!rows.length) return;
+
+    const labels = rows.map(r => {
+      const d = new Date(r.minute);
+      return d.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' });
+    });
+    const totals = rows.map(r => r.total);
+    const c0s    = rows.map(r => r.c0);
+
+    if (histChart) { histChart.destroy(); histChart = null; }
+
+    const ctx = document.getElementById('chart').getContext('2d');
+    histChart = new Chart(ctx, {
+      type: 'line',
+      data: {
+        labels,
+        datasets: [
+          {
+            label: 'TOTAL',
+            data: totals,
+            borderColor: '#4d7cff',
+            backgroundColor: 'rgba(77, 124, 255, 0.08)',
+            borderWidth: 1.5,
+            pointRadius: 0,
+            fill: true,
+            tension: 0.3,
+          },
+          {
+            label: 'VOIE 01',
+            data: c0s,
+            borderColor: '#8b5cf6',
+            backgroundColor: 'rgba(139, 92, 246, 0.05)',
+            borderWidth: 1,
+            pointRadius: 0,
+            fill: true,
+            tension: 0.3,
+          }
+        ],
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        animation: { duration: 600 },
+        interaction: { intersect: false, mode: 'index' },
+        plugins: {
+          legend: {
+            display: true,
+            position: 'top',
+            labels: {
+              color: '#6b7280',
+              font: { family: "'JetBrains Mono', monospace", size: 9 },
+              boxWidth: 10,
+              padding: 8,
+            },
+          },
+          tooltip: {
+            backgroundColor: 'rgba(12, 10, 30, 0.9)',
+            titleColor: '#e8eaed',
+            bodyColor: '#e8eaed',
+            borderColor: 'rgba(77, 124, 255, 0.3)',
+            borderWidth: 1,
+            titleFont: { family: "'JetBrains Mono', monospace", size: 10 },
+            bodyFont: { family: "'JetBrains Mono', monospace", size: 10 },
+            callbacks: {
+              label: item => `${item.dataset.label}: ${item.raw} W`,
+            },
+          },
+        },
+        scales: {
+          x: {
+            ticks: { color: '#3b3f54', font: { family: "'JetBrains Mono', monospace", size: 8 }, maxTicksLimit: 12 },
+            grid: { color: 'rgba(77, 124, 255, 0.04)' },
+          },
+          y: {
+            ticks: { color: '#3b3f54', font: { family: "'JetBrains Mono', monospace", size: 9 } },
+            grid: { color: 'rgba(77, 124, 255, 0.04)' },
+          },
+        },
+      },
+    });
+  } catch (e) { /* retry */ }
+}
+
+async function loadSettings() {
+  try {
+    const r = await fetch('/api/settings');
+    const s = await r.json();
+    alertThreshold = s.alert_threshold || 5000;
+    document.getElementById('alertInput').value = alertThreshold;
+  } catch (e) { /* ignore */ }
+}
+
+async function saveAlert() {
+  const val = parseInt(document.getElementById('alertInput').value);
+  if (!val || val < 100) return;
+  try {
+    await fetch('/api/settings', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ alert_threshold: val }),
+    });
+    alertThreshold = val;
+    const ok = document.getElementById('savedOk');
+    ok.classList.add('show');
+    setTimeout(() => ok.classList.remove('show'), 2000);
+  } catch (e) { /* ignore */ }
+}
+
+// ── Init ─────────────────────────────────────────────────
+loadStats();
+loadHistory();
+loadSettings();
+setInterval(loadStats, 30000);
+setInterval(loadHistory, 60000);
+
+// ══════════════════════════════════════════════════════════
+// Electron integration
+// ══════════════════════════════════════════════════════════
+(function initElectron() {
+  const api = window.electronAPI;
+  if (!api) return;
+  document.body.classList.add('is-electron');
+})();
+</script>
+</body>
+</html>

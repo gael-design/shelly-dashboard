@@ -1,0 +1,924 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>POWER STATION · FLUX</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;600;800&family=Space+Grotesk:wght@300;400;500;700&display=swap" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"></script>
+  <style>
+    /* ── FLUX PALETTE ─────────────────────────────────────── */
+    :root {
+      --bg:         #0a0a0f;
+      --bg-surface: rgba(14, 12, 18, 0.85);
+      --border:     rgba(100, 80, 60, 0.18);
+      --border-str: rgba(245, 158, 11, 0.35);
+      --text:       #f0f0f0;
+      --text-dim:   #888;
+      --muted:      #555;
+      --amber:      #f59e0b;
+      --cyan:       #06d6a0;
+      --red:        #ef4444;
+      --orange:     #f97316;
+      --amber-rgb:  245, 158, 11;
+      --cyan-rgb:   6, 214, 160;
+      --red-rgb:    239, 68, 68;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    html, body {
+      height: 100%;
+      overflow: hidden;
+      background: var(--bg);
+    }
+
+    body {
+      font-family: 'Space Grotesk', system-ui, sans-serif;
+      color: var(--text);
+      background:
+        radial-gradient(ellipse 70% 50% at 50% 40%, rgba(245, 158, 11, 0.04) 0%, transparent 70%),
+        radial-gradient(ellipse 60% 40% at 50% 80%, rgba(6, 214, 160, 0.03) 0%, transparent 70%),
+        #0a0a0f;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    /* ── LAYOUT ───────────────────────────────────────────── */
+    .flux-shell {
+      position: relative;
+      display: grid;
+      grid-template-rows: 44px 1fr auto auto auto;
+      height: 100vh;
+      gap: 0;
+      padding: 0;
+    }
+
+    /* ── HEADER ───────────────────────────────────────────── */
+    .hud-bar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 16px;
+      background: rgba(14, 12, 18, 0.92);
+      border-bottom: 1px solid var(--border);
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 11px;
+      letter-spacing: 0.08em;
+      -webkit-app-region: drag;
+      z-index: 10;
+    }
+    .hud-bar > * { -webkit-app-region: no-drag; }
+
+    .hud-left {
+      display: flex; align-items: center; gap: 10px;
+    }
+    .hud-title {
+      font-weight: 700; font-size: 13px; color: var(--amber);
+      text-transform: uppercase; letter-spacing: 0.12em;
+    }
+
+    .hud-center {
+      display: flex; align-items: center; gap: 14px;
+    }
+    .led {
+      width: 7px; height: 7px; border-radius: 50%;
+      background: var(--cyan);
+      box-shadow: 0 0 6px var(--cyan), 0 0 14px var(--cyan);
+      transition: all 0.4s;
+    }
+    .led.err {
+      background: var(--red);
+      box-shadow: 0 0 6px var(--red), 0 0 14px var(--red);
+    }
+    .status-label { color: var(--text-dim); font-size: 10px; }
+    .status-label.err { color: var(--red); }
+
+    .hud-right {
+      display: flex; align-items: center; gap: 14px;
+    }
+    .clock { color: var(--text-dim); font-size: 12px; font-weight: 600; }
+    .btn-layout {
+      background: rgba(245, 158, 11, 0.12);
+      border: 1px solid rgba(245, 158, 11, 0.3);
+      color: var(--amber);
+      padding: 3px 10px;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 9px;
+      font-weight: 600;
+      letter-spacing: 0.1em;
+      cursor: pointer;
+      border-radius: 3px;
+      transition: all 0.2s;
+    }
+    .btn-layout:hover { background: rgba(245, 158, 11, 0.25); }
+
+    /* ── FLOW CANVAS AREA ─────────────────────────────────── */
+    .flow-area {
+      position: relative;
+      min-height: 0;
+      overflow: hidden;
+    }
+    .flow-area canvas {
+      display: block;
+      width: 100%;
+      height: 100%;
+    }
+
+    /* ── ELECTRICAL DETAILS BAR ───────────────────────────── */
+    .elec-bar {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 24px;
+      padding: 6px 16px;
+      background: var(--bg-surface);
+      border-top: 1px solid var(--border);
+      border-bottom: 1px solid var(--border);
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 11px;
+      color: var(--text-dim);
+    }
+    .elec-bar .elec-item { display: flex; gap: 5px; }
+    .elec-bar .elec-lbl { color: var(--muted); font-size: 9px; text-transform: uppercase; }
+    .elec-bar .elec-val { color: var(--text); font-weight: 600; }
+
+    /* ── ENERGY STATS ROW ─────────────────────────────────── */
+    .stats-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      border-bottom: 1px solid var(--border);
+      font-family: 'JetBrains Mono', monospace;
+    }
+    .stat-block {
+      padding: 6px 14px;
+      border-right: 1px solid var(--border);
+    }
+    .stat-block:last-child { border-right: none; }
+    .stat-block .stat-title {
+      font-size: 9px; color: var(--muted); letter-spacing: 0.12em;
+      text-transform: uppercase; margin-bottom: 3px;
+    }
+    .stat-block .stat-lines {
+      display: flex; flex-direction: column; gap: 1px;
+      font-size: 11px;
+    }
+    .stat-line { display: flex; gap: 6px; }
+    .stat-arrow-imp { color: var(--amber); }
+    .stat-arrow-exp { color: var(--cyan); }
+    .stat-val { color: var(--text); font-weight: 600; }
+    .stat-unit { color: var(--muted); font-size: 9px; }
+
+    /* ── BOTTOM BAR (DEVICE HEALTH + CHART) ───────────────── */
+    .bottom-bar {
+      display: grid;
+      grid-template-columns: auto 1fr;
+      min-height: 0;
+      overflow: hidden;
+      background: var(--bg-surface);
+    }
+
+    .device-health {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+      padding: 6px 14px;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 10px;
+      border-right: 1px solid var(--border);
+      min-width: 130px;
+    }
+    .dh-row { display: flex; justify-content: space-between; gap: 10px; }
+    .dh-lbl { color: var(--muted); font-size: 9px; letter-spacing: 0.08em; }
+    .dh-val { color: var(--text-dim); font-weight: 600; }
+    .dh-val.warm { color: var(--amber); }
+    .dh-val.hot { color: var(--red); }
+    .dh-val.weak { color: var(--amber); }
+    .dh-val.bad { color: var(--red); }
+
+    .dh-stats-row {
+      margin-top: 4px;
+      padding-top: 4px;
+      border-top: 1px solid var(--border);
+    }
+    .dh-stats-title { font-size: 8px; color: var(--muted); letter-spacing: 0.12em; margin-bottom: 2px; }
+
+    .chart-wrap {
+      position: relative;
+      padding: 4px 8px 4px 4px;
+      min-height: 0;
+      overflow: hidden;
+    }
+    .chart-wrap canvas { width: 100% !important; height: 100% !important; }
+
+    /* ── RESPONSIVE: Pi 7" ────────────────────────────────── */
+    @media (max-width: 820px) and (max-height: 500px) {
+      .hud-bar { padding: 0 8px; font-size: 9px; }
+      .hud-title { font-size: 10px; }
+      .elec-bar { gap: 12px; padding: 4px 8px; font-size: 9px; }
+      .stats-row { font-size: 9px; }
+      .stat-block { padding: 4px 8px; }
+      .stat-block .stat-title { font-size: 8px; }
+      .stat-block .stat-lines { font-size: 9px; }
+      .device-health { padding: 4px 8px; font-size: 8px; min-width: 100px; }
+      .chart-wrap { padding: 2px 4px; }
+      .clock { font-size: 9px; }
+    }
+
+    @media (max-width: 820px) {
+      .elec-bar { gap: 10px; flex-wrap: wrap; }
+    }
+
+    /* ── Electron integration ─────────────────────────────── */
+    body.is-electron .hud-bar { -webkit-app-region: drag; }
+  </style>
+</head>
+<body>
+
+<div class="flux-shell">
+
+  <!-- ── HEADER ─────────────────────────────────────────── -->
+  <div class="hud-bar">
+    <div class="hud-left">
+      <span class="hud-title">POWER STATION</span>
+    </div>
+    <div class="hud-center">
+      <div class="led" id="led"></div>
+      <span class="status-label" id="statusLabel">CONNECTING...</span>
+    </div>
+    <div class="hud-right">
+      <span class="clock" id="clock">--:--:--</span>
+      <button class="btn-layout" id="btnLayout" title="Switch to Cockpit layout">COCKPIT</button>
+    </div>
+  </div>
+
+  <!-- ── FLOW CANVAS ────────────────────────────────────── -->
+  <div class="flow-area">
+    <canvas id="flowCanvas"></canvas>
+  </div>
+
+  <!-- ── ELECTRICAL DETAILS ─────────────────────────────── -->
+  <div class="elec-bar">
+    <div class="elec-item"><span class="elec-lbl">V</span><span class="elec-val" id="el-v">--</span></div>
+    <div class="elec-item"><span class="elec-lbl">A</span><span class="elec-val" id="el-a">--</span></div>
+    <div class="elec-item"><span class="elec-lbl">PF</span><span class="elec-val" id="el-pf">--</span></div>
+    <div class="elec-item"><span class="elec-lbl">VA</span><span class="elec-val" id="el-va">--</span></div>
+    <div class="elec-item"><span class="elec-lbl">FREQ</span><span class="elec-val" id="dh-freq">--</span></div>
+  </div>
+
+  <!-- ── ENERGY STATS ───────────────────────────────────── -->
+  <div class="stats-row">
+    <div class="stat-block">
+      <div class="stat-title">TODAY</div>
+      <div class="stat-lines">
+        <div class="stat-line"><span class="stat-arrow-imp">&darr;</span><span class="stat-val" id="kwh-imp">--</span><span class="stat-unit">kWh IMP</span></div>
+        <div class="stat-line"><span class="stat-arrow-exp">&uarr;</span><span class="stat-val" id="kwh-exp">--</span><span class="stat-unit">kWh EXP</span></div>
+      </div>
+    </div>
+    <div class="stat-block">
+      <div class="stat-title">7 DAYS</div>
+      <div class="stat-lines">
+        <div class="stat-line"><span class="stat-arrow-imp">&darr;</span><span class="stat-val" id="kwh-week">--</span><span class="stat-unit">kWh NET</span></div>
+        <div class="stat-line"><span class="stat-arrow-exp">&uarr;</span><span class="stat-val" id="kwh-exp-week">--</span><span class="stat-unit">kWh EXP</span></div>
+      </div>
+    </div>
+    <div class="stat-block">
+      <div class="stat-title">30 DAYS</div>
+      <div class="stat-lines">
+        <div class="stat-line"><span class="stat-arrow-imp">&darr;</span><span class="stat-val" id="kwh-month">--</span><span class="stat-unit">kWh NET</span></div>
+        <div class="stat-line"><span class="stat-arrow-exp">&uarr;</span><span class="stat-val" id="kwh-exp-month">--</span><span class="stat-unit">kWh EXP</span></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── BOTTOM: DEVICE HEALTH + CHART ──────────────────── -->
+  <div class="bottom-bar">
+    <div class="device-health">
+      <div class="dh-row"><span class="dh-lbl">TEMP</span><span class="dh-val" id="dh-temp">--</span></div>
+      <div class="dh-row"><span class="dh-lbl">RSSI</span><span class="dh-val" id="dh-rssi">--</span></div>
+      <div class="dh-row"><span class="dh-lbl">UP</span><span class="dh-val" id="dh-uptime">--</span></div>
+      <div class="dh-row"><span class="dh-lbl">FW</span><span class="dh-val" id="dh-fw">--</span></div>
+      <div class="dh-stats-row">
+        <div class="dh-stats-title">24H MIN / MAX / AVG</div>
+        <div class="dh-row"><span class="dh-val" id="stat-min">--</span><span class="dh-val" id="stat-max">--</span><span class="dh-val" id="stat-avg">--</span></div>
+      </div>
+    </div>
+    <div class="chart-wrap">
+      <canvas id="chart"></canvas>
+    </div>
+  </div>
+
+</div>
+
+<script>
+// ══════════════════════════════════════════════════════════
+// FLUX — Energy Flow Dashboard
+// ══════════════════════════════════════════════════════════
+
+const MAX_TOTAL_W = 7360;
+
+let histChart = null;
+
+// ── Clock ────────────────────────────────────────────────
+function tickClock() {
+  document.getElementById('clock').textContent = new Date().toLocaleTimeString('fr-FR');
+}
+setInterval(tickClock, 1000);
+tickClock();
+
+// ── Format helpers ───────────────────────────────────────
+const fr = v => typeof v === 'number' ? v.toLocaleString('fr-FR') : '\u2014';
+function f(v, dec = 1, unit = '') {
+  if (v == null || isNaN(v)) return '\u2014';
+  return v.toFixed(dec) + (unit ? '\u202f' + unit : '');
+}
+
+// ── Layout switcher ──────────────────────────────────────
+document.getElementById('btnLayout').addEventListener('click', () => {
+  window.location.href = 'index.html';
+});
+
+// ── WebSocket ────────────────────────────────────────────
+let ws;
+function connect() {
+  ws = new WebSocket(`ws://${location.host}`);
+  ws.onopen    = ()  => setStatus(true);
+  ws.onclose   = ()  => { setStatus(false); setTimeout(connect, 3000); };
+  ws.onerror   = ()  => ws.close();
+  ws.onmessage = e   => {
+    const msg = JSON.parse(e.data);
+    if (msg.type === 'live')  updateLive(msg.data);
+    if (msg.type === 'error') setStatus(false, msg.msg);
+  };
+}
+connect();
+
+function setStatus(ok, label = '') {
+  document.getElementById('led').className = 'led' + (ok ? '' : ' err');
+  const lbl = document.getElementById('statusLabel');
+  lbl.className = 'status-label' + (ok ? '' : ' err');
+  lbl.textContent = ok
+    ? 'ONLINE'
+    : ('OFFLINE' + (label ? ' // ' + label.toUpperCase().slice(0, 40) : ''));
+}
+
+// ══════════════════════════════════════════════════════════
+// FLOW CANVAS — animated energy flow visualization
+// ══════════════════════════════════════════════════════════
+
+const canvas = document.getElementById('flowCanvas');
+const ctx    = canvas.getContext('2d');
+
+const flow = {
+  w: 0, h: 0,
+  power: 0,      // current smoothed value
+  target: 0,     // target from WS
+  particles: [],
+  time: 0,
+};
+
+// Node positions (computed on resize)
+let nodes = { solar: {}, home: {}, grid: {} };
+
+function sizeCanvas() {
+  const wrap = canvas.parentElement;
+  const w = wrap.clientWidth;
+  const h = wrap.clientHeight;
+  if (!w || !h) return;
+  const dpr = window.devicePixelRatio || 1;
+  canvas.width  = w * dpr;
+  canvas.height = h * dpr;
+  canvas.style.width  = w + 'px';
+  canvas.style.height = h + 'px';
+  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  flow.w = w;
+  flow.h = h;
+
+  const cy = h * 0.46;
+  const nodeR = Math.min(w * 0.07, h * 0.18, 55);
+  nodes.solar = { x: w * 0.15, y: cy, r: nodeR * 0.7 };
+  nodes.home  = { x: w * 0.50, y: cy, r: nodeR };
+  nodes.grid  = { x: w * 0.85, y: cy, r: nodeR * 0.7 };
+}
+
+window.addEventListener('resize', sizeCanvas);
+setTimeout(sizeCanvas, 60);
+setTimeout(sizeCanvas, 300);
+
+// ── Particle system ──────────────────────────────────────
+
+function spawnParticles() {
+  const absW = Math.abs(flow.power);
+  if (absW < 5) return;
+  const intensity = Math.min(absW / MAX_TOTAL_W, 1);
+  const count = Math.ceil(intensity * 4);
+  const importing = flow.power > 0;
+
+  for (let i = 0; i < count; i++) {
+    if (Math.random() > 0.5 + intensity * 0.4) continue;
+
+    // Solar always feeds home (left path)
+    // Import: grid -> home (right path, amber/orange)
+    // Export: home -> grid (right path, cyan/green)
+
+    // Always spawn solar->home particles (solar is always producing if we have data)
+    if (Math.random() < 0.4) {
+      flow.particles.push({
+        path: 'solar-home',
+        t: 0,
+        speed: 0.008 + intensity * 0.018 + Math.random() * 0.006,
+        size: 2 + Math.random() * 2.5,
+        color: [6, 214, 160],  // cyan
+        life: 1,
+      });
+    }
+
+    // Grid path
+    if (importing) {
+      flow.particles.push({
+        path: 'grid-home',
+        t: 0,
+        speed: 0.006 + intensity * 0.016 + Math.random() * 0.005,
+        size: 2 + Math.random() * 2.5,
+        color: [245, 158, 11],  // amber
+        life: 1,
+      });
+    } else {
+      flow.particles.push({
+        path: 'home-grid',
+        t: 0,
+        speed: 0.006 + intensity * 0.016 + Math.random() * 0.005,
+        size: 2 + Math.random() * 2.5,
+        color: [6, 214, 160],  // cyan
+        life: 1,
+      });
+    }
+  }
+
+  // Cap particles
+  if (flow.particles.length > 200) {
+    flow.particles = flow.particles.slice(-150);
+  }
+}
+
+function getPointOnPath(pathName, t) {
+  const s = nodes.solar;
+  const h = nodes.home;
+  const g = nodes.grid;
+  const clamped = Math.max(0, Math.min(1, t));
+
+  if (pathName === 'solar-home') {
+    const cp1x = s.x + (h.x - s.x) * 0.35;
+    const cp1y = s.y - flow.h * 0.12;
+    const cp2x = s.x + (h.x - s.x) * 0.65;
+    const cp2y = h.y - flow.h * 0.12;
+    return bezierPoint(s.x + s.r, s.y, cp1x, cp1y, cp2x, cp2y, h.x - h.r, h.y, clamped);
+  }
+  if (pathName === 'grid-home') {
+    const cp1x = g.x - (g.x - h.x) * 0.35;
+    const cp1y = g.y - flow.h * 0.12;
+    const cp2x = g.x - (g.x - h.x) * 0.65;
+    const cp2y = h.y - flow.h * 0.12;
+    return bezierPoint(g.x - g.r, g.y, cp1x, cp1y, cp2x, cp2y, h.x + h.r, h.y, clamped);
+  }
+  if (pathName === 'home-grid') {
+    const cp1x = h.x + (g.x - h.x) * 0.35;
+    const cp1y = h.y - flow.h * 0.12;
+    const cp2x = h.x + (g.x - h.x) * 0.65;
+    const cp2y = g.y - flow.h * 0.12;
+    return bezierPoint(h.x + h.r, h.y, cp1x, cp1y, cp2x, cp2y, g.x - g.r, g.y, clamped);
+  }
+  return { x: 0, y: 0 };
+}
+
+function bezierPoint(x0, y0, cp1x, cp1y, cp2x, cp2y, x1, y1, t) {
+  const mt = 1 - t;
+  return {
+    x: mt*mt*mt*x0 + 3*mt*mt*t*cp1x + 3*mt*t*t*cp2x + t*t*t*x1,
+    y: mt*mt*mt*y0 + 3*mt*mt*t*cp1y + 3*mt*t*t*cp2y + t*t*t*y1,
+  };
+}
+
+function updateParticles() {
+  for (const p of flow.particles) {
+    p.t += p.speed;
+    if (p.t > 1) p.life -= 0.08;
+  }
+  flow.particles = flow.particles.filter(p => p.life > 0);
+}
+
+// ── Drawing ──────────────────────────────────────────────
+
+function drawPath(pathName, color, intensity) {
+  const s = nodes.solar;
+  const h = nodes.home;
+  const g = nodes.grid;
+
+  ctx.save();
+  ctx.strokeStyle = `rgba(${color.join(',')}, ${0.08 + intensity * 0.18})`;
+  ctx.lineWidth = 2 + intensity * 2;
+  ctx.setLineDash([8, 6]);
+  ctx.lineDashOffset = -flow.time * 0.5;
+  ctx.beginPath();
+
+  if (pathName === 'solar-home') {
+    const cp1x = s.x + (h.x - s.x) * 0.35;
+    const cp1y = s.y - flow.h * 0.12;
+    const cp2x = s.x + (h.x - s.x) * 0.65;
+    const cp2y = h.y - flow.h * 0.12;
+    ctx.moveTo(s.x + s.r, s.y);
+    ctx.bezierCurveTo(cp1x, cp1y, cp2x, cp2y, h.x - h.r, h.y);
+  } else if (pathName === 'grid-home' || pathName === 'home-grid') {
+    const cp1x = h.x + (g.x - h.x) * 0.35;
+    const cp1y = h.y - flow.h * 0.12;
+    const cp2x = h.x + (g.x - h.x) * 0.65;
+    const cp2y = g.y - flow.h * 0.12;
+    ctx.moveTo(h.x + h.r, h.y);
+    ctx.bezierCurveTo(cp1x, cp1y, cp2x, cp2y, g.x - g.r, g.y);
+  }
+
+  ctx.stroke();
+  ctx.restore();
+}
+
+function drawSunIcon(x, y, r) {
+  ctx.save();
+  // Glow
+  ctx.shadowColor = 'rgba(245, 200, 50, 0.5)';
+  ctx.shadowBlur = r * 0.8;
+  // Circle
+  ctx.fillStyle = '#f59e0b';
+  ctx.beginPath();
+  ctx.arc(x, y, r * 0.45, 0, Math.PI * 2);
+  ctx.fill();
+  // Rays
+  ctx.strokeStyle = '#f59e0b';
+  ctx.lineWidth = 2;
+  ctx.shadowBlur = r * 0.4;
+  for (let i = 0; i < 8; i++) {
+    const angle = (Math.PI * 2 / 8) * i;
+    const inner = r * 0.58;
+    const outer = r * 0.85;
+    ctx.beginPath();
+    ctx.moveTo(x + Math.cos(angle) * inner, y + Math.sin(angle) * inner);
+    ctx.lineTo(x + Math.cos(angle) * outer, y + Math.sin(angle) * outer);
+    ctx.stroke();
+  }
+  ctx.restore();
+}
+
+function drawHouseIcon(x, y, r) {
+  ctx.save();
+  const importing = flow.power > 20;
+  const exporting = flow.power < -20;
+  const borderColor = exporting ? [6, 214, 160] : importing ? [245, 158, 11] : [120, 120, 120];
+  const pulse = 0.6 + 0.4 * Math.sin(flow.time * 0.04);
+  const alpha = exporting || importing ? 0.5 + pulse * 0.5 : 0.3;
+
+  // Pulsing border glow
+  ctx.shadowColor = `rgba(${borderColor.join(',')}, ${alpha * 0.6})`;
+  ctx.shadowBlur = 15 + pulse * 10;
+
+  // Rounded rectangle
+  const w = r * 2.2;
+  const h = r * 1.8;
+  const rx = 8;
+  ctx.strokeStyle = `rgba(${borderColor.join(',')}, ${alpha})`;
+  ctx.lineWidth = 2.5;
+  ctx.beginPath();
+  ctx.roundRect(x - w/2, y - h/2, w, h, rx);
+  ctx.stroke();
+
+  // Fill
+  ctx.shadowBlur = 0;
+  ctx.fillStyle = 'rgba(14, 12, 18, 0.85)';
+  ctx.beginPath();
+  ctx.roundRect(x - w/2, y - h/2, w, h, rx);
+  ctx.fill();
+
+  // Border again on top
+  ctx.strokeStyle = `rgba(${borderColor.join(',')}, ${alpha})`;
+  ctx.lineWidth = 2.5;
+  ctx.beginPath();
+  ctx.roundRect(x - w/2, y - h/2, w, h, rx);
+  ctx.stroke();
+
+  // House silhouette (small, above the power text)
+  const houseY = y - h/2 + r * 0.35;
+  const houseSize = r * 0.28;
+  ctx.fillStyle = `rgba(${borderColor.join(',')}, 0.4)`;
+  ctx.beginPath();
+  // Roof
+  ctx.moveTo(x - houseSize, houseY);
+  ctx.lineTo(x, houseY - houseSize * 0.8);
+  ctx.lineTo(x + houseSize, houseY);
+  // Body
+  ctx.lineTo(x + houseSize * 0.75, houseY);
+  ctx.lineTo(x + houseSize * 0.75, houseY + houseSize * 0.7);
+  ctx.lineTo(x - houseSize * 0.75, houseY + houseSize * 0.7);
+  ctx.lineTo(x - houseSize * 0.75, houseY);
+  ctx.closePath();
+  ctx.fill();
+
+  // Power value (large)
+  const absW = Math.abs(flow.power);
+  const valText = Math.round(flow.power).toLocaleString('fr-FR');
+  const valColor = exporting ? '#06d6a0' : importing ? '#f59e0b' : '#888';
+
+  ctx.fillStyle = valColor;
+  ctx.font = `800 ${Math.min(r * 0.65, 38)}px 'Space Grotesk', sans-serif`;
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  ctx.fillText(valText + 'W', x, y + r * 0.08);
+
+  // State text below
+  let stateText = '\u2501 EQUILIBRIUM \u2501';
+  if (importing)  stateText = '\u25B6 GRID IMPORT \u25B6';
+  if (exporting)  stateText = '\u25C0 SOLAR EXPORT \u25C0';
+
+  ctx.fillStyle = `rgba(${borderColor.join(',')}, 0.7)`;
+  ctx.font = `600 ${Math.min(r * 0.22, 11)}px 'JetBrains Mono', monospace`;
+  ctx.fillText(stateText, x, y + h/2 - r * 0.2);
+
+  ctx.restore();
+}
+
+function drawGridIcon(x, y, r) {
+  ctx.save();
+  // Lightning bolt
+  ctx.shadowColor = 'rgba(245, 158, 11, 0.4)';
+  ctx.shadowBlur = r * 0.5;
+  ctx.fillStyle = '#f59e0b';
+  ctx.beginPath();
+  const s = r * 0.5;
+  ctx.moveTo(x - s * 0.15, y - s);
+  ctx.lineTo(x + s * 0.55, y - s);
+  ctx.lineTo(x + s * 0.05, y - s * 0.05);
+  ctx.lineTo(x + s * 0.45, y - s * 0.05);
+  ctx.lineTo(x - s * 0.25, y + s);
+  ctx.lineTo(x + s * 0.1, y + s * 0.1);
+  ctx.lineTo(x - s * 0.35, y + s * 0.1);
+  ctx.closePath();
+  ctx.fill();
+  ctx.restore();
+}
+
+function drawNodeLabel(x, y, r, label, sublabel) {
+  ctx.save();
+  ctx.fillStyle = '#f0f0f0';
+  ctx.font = `700 ${Math.min(r * 0.35, 13)}px 'JetBrains Mono', monospace`;
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'top';
+  ctx.fillText(label, x, y + r + 8);
+
+  if (sublabel) {
+    ctx.fillStyle = '#666';
+    ctx.font = `400 ${Math.min(r * 0.25, 10)}px 'JetBrains Mono', monospace`;
+    ctx.fillText(sublabel, x, y + r + 24);
+  }
+  ctx.restore();
+}
+
+function drawParticles() {
+  ctx.save();
+  for (const p of flow.particles) {
+    const pos = getPointOnPath(p.path, Math.min(p.t, 1));
+    const alpha = p.life * (p.t < 0.1 ? p.t / 0.1 : 1);
+    ctx.shadowColor = `rgba(${p.color.join(',')}, ${alpha * 0.8})`;
+    ctx.shadowBlur = p.size * 3;
+    ctx.fillStyle = `rgba(${p.color.join(',')}, ${alpha})`;
+    ctx.beginPath();
+    ctx.arc(pos.x, pos.y, p.size, 0, Math.PI * 2);
+    ctx.fill();
+  }
+  ctx.restore();
+}
+
+// ── Main render loop ─────────────────────────────────────
+
+function render() {
+  if (!flow.w || !flow.h) { requestAnimationFrame(render); return; }
+
+  // Smooth towards target
+  flow.power += (flow.target - flow.power) * 0.09;
+
+  flow.time++;
+
+  // Clear
+  ctx.clearRect(0, 0, flow.w, flow.h);
+
+  const absW = Math.abs(flow.power);
+  const intensity = Math.min(absW / MAX_TOTAL_W, 1);
+  const importing = flow.power > 20;
+  const exporting = flow.power < -20;
+
+  // Draw paths
+  drawPath('solar-home', [6, 214, 160], exporting ? intensity : intensity * 0.3);
+  if (importing) {
+    drawPath('grid-home', [245, 158, 11], intensity);
+  } else if (exporting) {
+    drawPath('home-grid', [6, 214, 160], intensity);
+  } else {
+    drawPath('grid-home', [100, 100, 100], 0.05);
+  }
+
+  // Spawn & update particles
+  spawnParticles();
+  updateParticles();
+  drawParticles();
+
+  // Draw nodes
+  drawSunIcon(nodes.solar.x, nodes.solar.y, nodes.solar.r);
+  drawNodeLabel(nodes.solar.x, nodes.solar.y, nodes.solar.r, 'SOLAR', 'panels');
+
+  drawHouseIcon(nodes.home.x, nodes.home.y, nodes.home.r);
+
+  drawGridIcon(nodes.grid.x, nodes.grid.y, nodes.grid.r);
+  drawNodeLabel(nodes.grid.x, nodes.grid.y, nodes.grid.r, 'GRID', 'network');
+
+  requestAnimationFrame(render);
+}
+requestAnimationFrame(render);
+
+// ══════════════════════════════════════════════════════════
+// DATA HANDLING
+// ══════════════════════════════════════════════════════════
+
+function updateLive(d) {
+  setStatus(true);
+  const tw = d.total_w || 0;
+  flow.target = tw;
+
+  // Electrical details
+  const ch = d.channels ? d.channels['0'] : null;
+  if (ch) {
+    document.getElementById('el-v').textContent  = f(ch.v, 0, 'V');
+    document.getElementById('el-a').textContent  = f(ch.a, 2, 'A');
+    document.getElementById('el-pf').textContent = f(ch.pf, 2);
+    const va = ch.va != null ? ch.va : (ch.v || 0) * Math.abs(ch.a || 0);
+    document.getElementById('el-va').textContent = f(va, 0, 'VA');
+  }
+
+  // Device health
+  if (d.device) updateDeviceHealth(d.device, d.freq);
+}
+
+// ── Device health ────────────────────────────────────────
+function fmtUptime(sec) {
+  if (sec == null) return '\u2014';
+  const dd = Math.floor(sec / 86400);
+  const hh = Math.floor((sec % 86400) / 3600);
+  const mm = Math.floor((sec % 3600) / 60);
+  const ss = sec % 60;
+  if (dd > 0) return `${dd}d ${String(hh).padStart(2,'0')}h${String(mm).padStart(2,'0')}`;
+  return `${String(hh).padStart(2,'0')}:${String(mm).padStart(2,'0')}:${String(ss).padStart(2,'0')}`;
+}
+
+function updateDeviceHealth(dev, freq) {
+  if (freq != null) document.getElementById('dh-freq').textContent = freq.toFixed(2) + '\u202fHz';
+
+  const tEl = document.getElementById('dh-temp');
+  if (dev.temp_c != null) {
+    tEl.textContent = dev.temp_c.toFixed(1) + '\u00b0C';
+    tEl.classList.remove('warm', 'hot');
+    if (dev.temp_c > 70) tEl.classList.add('hot');
+    else if (dev.temp_c > 55) tEl.classList.add('warm');
+  }
+
+  const rEl = document.getElementById('dh-rssi');
+  if (dev.wifi_rssi != null) {
+    rEl.textContent = dev.wifi_rssi + ' dBm';
+    rEl.classList.remove('weak', 'bad');
+    if (dev.wifi_rssi < -80) rEl.classList.add('bad');
+    else if (dev.wifi_rssi < -70) rEl.classList.add('weak');
+  }
+
+  if (dev.uptime_s != null) {
+    document.getElementById('dh-uptime').textContent = fmtUptime(dev.uptime_s);
+  }
+
+  if (dev.fw_current) document.getElementById('dh-fw').textContent = dev.fw_current;
+}
+
+// ── Stats ────────────────────────────────────────────────
+async function loadStats() {
+  try {
+    const s = await fetch('/api/stats').then(r => r.json());
+    document.getElementById('kwh-imp').textContent       = s.kwh_imp_today.toFixed(2);
+    document.getElementById('kwh-exp').textContent       = s.kwh_exp_today.toFixed(2);
+    document.getElementById('kwh-week').textContent      = s.kwh_week.toFixed(1);
+    document.getElementById('kwh-month').textContent     = s.kwh_month.toFixed(1);
+    document.getElementById('kwh-exp-week').textContent  = (s.kwh_exp_week || 0).toFixed(1);
+    document.getElementById('kwh-exp-month').textContent = (s.kwh_exp_month || 0).toFixed(1);
+    document.getElementById('stat-min').textContent  = fr(s.today_min);
+    document.getElementById('stat-max').textContent  = fr(s.today_max);
+    document.getElementById('stat-avg').textContent  = fr(s.today_avg);
+  } catch (_) {}
+}
+loadStats();
+setInterval(loadStats, 30000);
+
+// ── History chart ────────────────────────────────────────
+async function loadHistory() {
+  try {
+    const rows = await fetch('/api/history').then(r => r.json());
+    if (!rows.length) return;
+
+    const labels = rows.map(r =>
+      new Date(r.minute).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })
+    );
+
+    const data = {
+      labels,
+      datasets: [
+        {
+          label: 'TOTAL',
+          data: rows.map(r => +(r.total || 0).toFixed(0)),
+          borderColor: '#f59e0b',
+          backgroundColor: (c) => {
+            const { ctx: cx, chartArea } = c.chart;
+            if (!chartArea) return 'rgba(245,158,11,0.1)';
+            const grad = cx.createLinearGradient(0, chartArea.top, 0, chartArea.bottom);
+            grad.addColorStop(0,   'rgba(239,68,68,0.25)');
+            grad.addColorStop(0.5, 'rgba(245,158,11,0.06)');
+            grad.addColorStop(1,   'rgba(6,214,160,0.25)');
+            return grad;
+          },
+          borderWidth: 2,
+          pointRadius: 0,
+          tension: 0.38,
+          fill: true,
+        },
+        {
+          label: 'VOIE 01',
+          data: rows.map(r => +(r.c0 || 0).toFixed(0)),
+          borderColor: '#06d6a0',
+          backgroundColor: 'transparent',
+          borderWidth: 1.4,
+          pointRadius: 0,
+          tension: 0.32,
+          fill: false,
+        },
+      ],
+    };
+
+    if (histChart) {
+      histChart.data = data;
+      histChart.update('none');
+    } else {
+      histChart = new Chart(document.getElementById('chart'), {
+        type: 'line', data,
+        options: {
+          responsive: true, maintainAspectRatio: false,
+          animation: { duration: 400 },
+          interaction: { mode: 'index', intersect: false },
+          plugins: {
+            legend: {
+              labels: {
+                color: '#888',
+                font: { family: 'JetBrains Mono', size: 10 },
+                boxWidth: 10, boxHeight: 10, padding: 14,
+              },
+            },
+            tooltip: {
+              backgroundColor: 'rgba(14, 12, 18, 0.95)',
+              borderColor: 'rgba(245, 158, 11, 0.3)',
+              borderWidth: 1,
+              titleColor: '#f0f0f0',
+              bodyColor: '#888',
+              titleFont: { family: 'JetBrains Mono', size: 10 },
+              bodyFont:  { family: 'JetBrains Mono', size: 11 },
+              padding: 10,
+              callbacks: {
+                label: c => ` ${c.dataset.label}  ${fr(c.parsed.y)} W`,
+              },
+            },
+          },
+          scales: {
+            x: {
+              ticks: { color: '#555', font: { family: 'JetBrains Mono', size: 9 }, maxTicksLimit: 14, maxRotation: 0 },
+              grid: { color: 'rgba(245, 158, 11, 0.05)' },
+            },
+            y: {
+              ticks: { color: '#555', font: { family: 'JetBrains Mono', size: 9 }, callback: v => fr(v) },
+              grid: { color: 'rgba(245, 158, 11, 0.05)' },
+            },
+          },
+        },
+      });
+    }
+  } catch (_) {}
+}
+loadHistory();
+setInterval(loadHistory, 60000);
+
+// ── Electron integration ─────────────────────────────────
+(function initElectron() {
+  const api = window.electronAPI;
+  if (!api) return;
+  document.body.classList.add('is-electron');
+})();
+</script>
+</body>
+</html>

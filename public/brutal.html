@@ -1,0 +1,612 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>POWER STATION · BRUTAL</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;700;800&display=swap" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"></script>
+  <style>
+    *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+    :root {
+      --red: #ff0000;
+      --cyan: #00ffcc;
+      --white: #ffffff;
+      --dim: #666666;
+      --border: #333333;
+      --bg: #000000;
+    }
+
+    html, body {
+      height: 100vh;
+      overflow: hidden;
+      background: var(--bg);
+      color: var(--white);
+      font-family: 'JetBrains Mono', monospace;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    body {
+      display: flex;
+      flex-direction: column;
+      height: 100vh;
+    }
+
+    /* ── HEADER ──────────────────────────────────── */
+    .header {
+      display: flex;
+      align-items: center;
+      height: 32px;
+      min-height: 32px;
+      border-bottom: 1px solid var(--border);
+      font-size: 11px;
+      letter-spacing: 0.05em;
+      -webkit-app-region: drag;
+    }
+
+    .header span {
+      padding: 0 12px;
+      white-space: nowrap;
+    }
+
+    .header .sep {
+      width: 1px;
+      height: 100%;
+      background: var(--border);
+      padding: 0;
+    }
+
+    .header .title {
+      font-weight: 700;
+      letter-spacing: 0.12em;
+    }
+
+    .header .status-dot {
+      display: inline-block;
+      width: 6px;
+      height: 6px;
+      margin-right: 6px;
+      background: var(--red);
+    }
+
+    .header .status-dot.online { background: var(--cyan); }
+
+    .header .spacer { flex: 1; -webkit-app-region: drag; }
+
+    .header .btn-layout {
+      padding: 0 14px;
+      height: 100%;
+      display: flex;
+      align-items: center;
+      background: none;
+      border: none;
+      border-left: 1px solid var(--border);
+      color: var(--dim);
+      font-family: inherit;
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: 0.15em;
+      cursor: pointer;
+      -webkit-app-region: no-drag;
+    }
+
+    .header .btn-layout:hover { color: var(--white); }
+
+    /* ── MAIN ────────────────────────────────────── */
+    .main {
+      flex: 1;
+      display: flex;
+      min-height: 0;
+    }
+
+    /* ── VERTICAL BAR GAUGE ──────────────────────── */
+    .gauge-col {
+      width: 28px;
+      min-width: 28px;
+      border-right: 1px solid var(--border);
+      position: relative;
+    }
+
+    .gauge-col canvas {
+      display: block;
+      width: 100%;
+      height: 100%;
+    }
+
+    /* ── CONTENT ─────────────────────────────────── */
+    .content {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      padding: 0 24px;
+      min-width: 0;
+      overflow: hidden;
+    }
+
+    /* ── BIG NUMBER ──────────────────────────────── */
+    .big-number-zone {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      min-height: 0;
+    }
+
+    .big-value {
+      font-size: clamp(120px, 20vw, 300px);
+      font-weight: 800;
+      line-height: 0.85;
+      color: var(--white);
+      letter-spacing: -0.03em;
+      transition: color 0.3s;
+    }
+
+    .big-value.exporting { color: var(--cyan); }
+
+    .big-unit {
+      font-size: clamp(24px, 3vw, 48px);
+      font-weight: 300;
+      color: var(--dim);
+      margin-top: 4px;
+      letter-spacing: 0.1em;
+    }
+
+    .big-direction {
+      font-size: 12px;
+      font-weight: 700;
+      letter-spacing: 0.2em;
+      margin-top: 12px;
+      color: var(--red);
+      transition: color 0.3s;
+    }
+
+    .big-direction.exporting { color: var(--cyan); }
+
+    /* ── DATA ROWS ───────────────────────────────── */
+    .data-rows {
+      padding-bottom: 8px;
+    }
+
+    .data-row {
+      font-size: 12px;
+      color: var(--dim);
+      line-height: 1.9;
+      letter-spacing: 0.04em;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .data-row .val { color: var(--white); }
+    .data-row .lbl { color: var(--dim); margin-right: 4px; }
+    .data-row .imp { color: var(--red); }
+    .data-row .exp { color: var(--cyan); }
+    .data-row .sep { margin: 0 10px; color: #222; }
+
+    /* ── CHART AREA ──────────────────────────────── */
+    .chart-area {
+      height: 100px;
+      min-height: 80px;
+      border-top: 1px solid var(--border);
+      position: relative;
+      padding: 6px 0;
+    }
+
+    .chart-area canvas {
+      width: 100% !important;
+      height: 100% !important;
+    }
+
+    .chart-stats {
+      position: absolute;
+      bottom: 4px;
+      right: 0;
+      font-size: 10px;
+      color: var(--dim);
+      letter-spacing: 0.05em;
+    }
+
+    .chart-stats .val { color: var(--white); }
+
+    /* ── RESPONSIVE: Pi 7" ───────────────────────── */
+    @media (max-width: 820px) and (max-height: 500px) {
+      .header { height: 26px; min-height: 26px; font-size: 9px; }
+      .header span { padding: 0 6px; }
+      .gauge-col { width: 20px; min-width: 20px; }
+      .content { padding: 0 10px; }
+      .big-value { font-size: clamp(60px, 18vw, 140px); }
+      .big-unit { font-size: 16px; }
+      .big-direction { font-size: 10px; margin-top: 6px; }
+      .data-row { font-size: 10px; line-height: 1.7; }
+      .chart-area { height: 60px; min-height: 50px; }
+      .chart-stats { font-size: 8px; }
+    }
+
+    @media (max-width: 480px) {
+      .content { padding: 0 8px; }
+      .big-value { font-size: clamp(48px, 22vw, 100px); }
+      .big-unit { font-size: 14px; }
+      .data-row { font-size: 9px; }
+      .data-row .sep { margin: 0 4px; }
+    }
+
+    /* ── ELECTRON ─────────────────────────────────── */
+    body.is-electron .header { -webkit-app-region: drag; }
+    body.is-electron .header .btn-layout { -webkit-app-region: no-drag; }
+  </style>
+</head>
+<body>
+
+  <!-- HEADER -->
+  <div class="header">
+    <span class="title">POWER STATION</span>
+    <div class="sep"></div>
+    <span><span class="status-dot" id="statusDot"></span><span id="statusText">OFFLINE</span></span>
+    <div class="sep"></div>
+    <span id="clock">--:--:--</span>
+    <span class="spacer"></span>
+    <button class="btn-layout" onclick="window.location.href='flux.html'">LAYOUT</button>
+  </div>
+
+  <!-- MAIN -->
+  <div class="main">
+    <!-- Vertical bar gauge -->
+    <div class="gauge-col">
+      <canvas id="gaugeCanvas"></canvas>
+    </div>
+
+    <!-- Content -->
+    <div class="content">
+      <div class="big-number-zone">
+        <div class="big-value" id="bigValue">---</div>
+        <div class="big-unit">W</div>
+        <div class="big-direction" id="bigDir">-- STANDBY --</div>
+      </div>
+
+      <div class="data-rows">
+        <div class="data-row" id="rowElec">
+          <span class="val" id="dVolt">---V</span><span class="sep">|</span>
+          <span class="val" id="dAmp">---A</span><span class="sep">|</span>
+          <span class="lbl">PF</span><span class="val" id="dPF">---</span><span class="sep">|</span>
+          <span class="val" id="dVA">---VA</span>
+        </div>
+        <div class="data-row" id="rowEnergy">
+          <span class="lbl">TODAY</span>
+          <span class="imp" id="dImpDay">&darr;---</span>
+          <span class="exp" id="dExpDay">&uarr;---</span><span class="sep">|</span>
+          <span class="lbl">7D</span>
+          <span class="imp" id="dImpWeek">&darr;---</span>
+          <span class="exp" id="dExpWeek">&uarr;---</span><span class="sep">|</span>
+          <span class="lbl">30D</span>
+          <span class="imp" id="dImpMonth">&darr;---</span>
+          <span class="exp" id="dExpMonth">&uarr;---</span>
+        </div>
+        <div class="data-row" id="rowDevice">
+          <span class="val" id="dFreq">---Hz</span><span class="sep">|</span>
+          <span class="val" id="dTemp">---&deg;C</span><span class="sep">|</span>
+          <span class="val" id="dRSSI">---dBm</span><span class="sep">|</span>
+          <span class="lbl">UP</span><span class="val" id="dUptime">---</span>
+        </div>
+      </div>
+
+      <!-- Chart -->
+      <div class="chart-area">
+        <canvas id="chartCanvas"></canvas>
+        <div class="chart-stats">
+          MIN <span class="val" id="cMin">---</span>
+          &nbsp;MAX <span class="val" id="cMax">---</span>
+          &nbsp;AVG <span class="val" id="cAvg">---</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+<script>
+/* ═══════════════════════════════════════════════════════════
+   BRUTAL DASHBOARD — Power Station Shelly EM Gen3
+   ═══════════════════════════════════════════════════════════ */
+
+const MAX_TOTAL_W = 7360;
+const RED = '#ff0000';
+const CYAN = '#00ffcc';
+const WHITE = '#ffffff';
+const DIM = '#666666';
+const BORDER = '#333333';
+
+/* ── STATE ──────────────────────────────────────── */
+let currentW = 0;
+let displayW = 0;
+let isOnline = false;
+let liveData = null;
+let statsData = null;
+let historyData = null;
+let chart = null;
+
+/* ── ELEMENTS ───────────────────────────────────── */
+const $bigValue = document.getElementById('bigValue');
+const $bigDir = document.getElementById('bigDir');
+const $statusDot = document.getElementById('statusDot');
+const $statusText = document.getElementById('statusText');
+const $clock = document.getElementById('clock');
+
+/* ── CLOCK ──────────────────────────────────────── */
+function updateClock() {
+  const d = new Date();
+  $clock.textContent = d.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+}
+setInterval(updateClock, 1000);
+updateClock();
+
+/* ── STATUS ─────────────────────────────────────── */
+function setStatus(online) {
+  isOnline = online;
+  $statusDot.classList.toggle('online', online);
+  $statusText.textContent = online ? 'ONLINE' : 'OFFLINE';
+}
+
+/* ── WEBSOCKET ──────────────────────────────────── */
+let ws = null;
+let wsRetryMs = 1000;
+
+function connectWS() {
+  const proto = location.protocol === 'https:' ? 'wss' : 'ws';
+  ws = new WebSocket(`${proto}://${location.host}`);
+
+  ws.onopen = () => { wsRetryMs = 1000; };
+
+  ws.onmessage = (e) => {
+    try {
+      const msg = JSON.parse(e.data);
+      if (msg.type === 'live') {
+        setStatus(true);
+        liveData = msg.data;
+        currentW = msg.data.total_w || 0;
+        updateLiveUI(msg.data);
+      } else if (msg.type === 'error') {
+        setStatus(false);
+      }
+    } catch (err) { /* ignore */ }
+  };
+
+  ws.onclose = () => {
+    setStatus(false);
+    setTimeout(connectWS, wsRetryMs);
+    wsRetryMs = Math.min(wsRetryMs * 1.5, 10000);
+  };
+
+  ws.onerror = () => { ws.close(); };
+}
+connectWS();
+
+/* ── LIVE UI UPDATE ─────────────────────────────── */
+function updateLiveUI(d) {
+  const ch = d.channels && d.channels['0'] ? d.channels['0'] : {};
+
+  document.getElementById('dVolt').textContent = (ch.v || 0).toFixed(0) + 'V';
+  document.getElementById('dAmp').textContent = (ch.a || 0).toFixed(2) + 'A';
+  document.getElementById('dPF').textContent = (ch.pf || 0).toFixed(2);
+  document.getElementById('dVA').textContent = (ch.va || 0).toFixed(0) + 'VA';
+
+  document.getElementById('dFreq').textContent = (d.freq || 0).toFixed(2) + 'Hz';
+
+  if (d.device) {
+    document.getElementById('dTemp').textContent = (d.device.temp_c || 0).toFixed(1) + '\u00B0C';
+    document.getElementById('dRSSI').textContent = (d.device.wifi_rssi || 0) + 'dBm';
+    document.getElementById('dUptime').textContent = formatUptime(d.device.uptime_s || 0);
+  }
+}
+
+function formatUptime(s) {
+  const d = Math.floor(s / 86400);
+  const h = Math.floor((s % 86400) / 3600);
+  const m = Math.floor((s % 3600) / 60);
+  return d + 'd ' + String(h).padStart(2, '0') + 'h' + String(m).padStart(2, '0');
+}
+
+/* ── STATS (REST) ───────────────────────────────── */
+async function fetchStats() {
+  try {
+    const r = await fetch('/api/stats');
+    const s = await r.json();
+    statsData = s;
+
+    document.getElementById('dImpDay').innerHTML = '&darr;' + fmtKWh(s.kwh_imp_today);
+    document.getElementById('dExpDay').innerHTML = '&uarr;' + fmtKWh(s.kwh_exp_today);
+    document.getElementById('dImpWeek').innerHTML = '&darr;' + fmtKWh(s.kwh_week);
+    document.getElementById('dExpWeek').innerHTML = '&uarr;' + fmtKWh(s.kwh_exp_week);
+    document.getElementById('dImpMonth').innerHTML = '&darr;' + fmtKWh(s.kwh_month);
+    document.getElementById('dExpMonth').innerHTML = '&uarr;' + fmtKWh(s.kwh_exp_month);
+
+    document.getElementById('cMin').textContent = s.today_min != null ? Math.round(s.today_min) : '---';
+    document.getElementById('cMax').textContent = s.today_max != null ? Math.round(s.today_max) : '---';
+    document.getElementById('cAvg').textContent = s.today_avg != null ? Math.round(s.today_avg) : '---';
+  } catch (e) { /* ignore */ }
+}
+
+function fmtKWh(v) {
+  if (v == null) return '---';
+  return v.toFixed(2) + ' kWh';
+}
+
+/* ── HISTORY (REST) ─────────────────────────────── */
+async function fetchHistory() {
+  try {
+    const r = await fetch('/api/history');
+    historyData = await r.json();
+    updateChart();
+  } catch (e) { /* ignore */ }
+}
+
+/* ── CHART ──────────────────────────────────────── */
+function initChart() {
+  const ctx = document.getElementById('chartCanvas').getContext('2d');
+  chart = new Chart(ctx, {
+    type: 'line',
+    data: {
+      labels: [],
+      datasets: [{
+        data: [],
+        borderColor: WHITE,
+        borderWidth: 1,
+        pointRadius: 0,
+        fill: false,
+        tension: 0.2
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      animation: false,
+      plugins: { legend: { display: false }, tooltip: { enabled: false } },
+      scales: {
+        x: {
+          display: true,
+          ticks: { color: DIM, font: { family: 'JetBrains Mono', size: 9 }, maxTicksLimit: 8 },
+          grid: { color: 'rgba(51,51,51,0.4)', drawTicks: false },
+          border: { color: BORDER }
+        },
+        y: {
+          display: true,
+          ticks: { color: DIM, font: { family: 'JetBrains Mono', size: 9 }, maxTicksLimit: 5 },
+          grid: { color: 'rgba(51,51,51,0.4)', drawTicks: false },
+          border: { color: BORDER }
+        }
+      }
+    }
+  });
+}
+
+function updateChart() {
+  if (!chart || !historyData || !historyData.length) return;
+
+  const labels = historyData.map(r => {
+    const d = new Date(r.minute);
+    return String(d.getHours()).padStart(2, '0') + ':' + String(d.getMinutes()).padStart(2, '0');
+  });
+  const values = historyData.map(r => r.total != null ? r.total : r.c0);
+
+  chart.data.labels = labels;
+  chart.data.datasets[0].data = values;
+  chart.update('none');
+}
+
+/* ── VERTICAL BAR GAUGE (Canvas) ────────────────── */
+const gaugeCanvas = document.getElementById('gaugeCanvas');
+const gaugeCtx = gaugeCanvas.getContext('2d');
+let gaugeAnimW = 0;
+
+function resizeGauge() {
+  const rect = gaugeCanvas.parentElement.getBoundingClientRect();
+  gaugeCanvas.width = rect.width * devicePixelRatio;
+  gaugeCanvas.height = rect.height * devicePixelRatio;
+  gaugeCtx.scale(devicePixelRatio, devicePixelRatio);
+}
+
+function drawGauge() {
+  const rect = gaugeCanvas.parentElement.getBoundingClientRect();
+  const w = rect.width;
+  const h = rect.height;
+  const centerY = h / 2;
+
+  gaugeCtx.clearRect(0, 0, w, h);
+
+  // Background track
+  gaugeCtx.fillStyle = '#111111';
+  gaugeCtx.fillRect(4, 0, w - 8, h);
+
+  // Filled bar from center
+  const ratio = Math.max(-1, Math.min(1, gaugeAnimW / MAX_TOTAL_W));
+  const barH = Math.abs(ratio) * centerY;
+
+  if (ratio >= 0) {
+    // Consumption — fills upward from center, RED
+    gaugeCtx.fillStyle = RED;
+    gaugeCtx.fillRect(4, centerY - barH, w - 8, barH);
+  } else {
+    // Export — fills downward from center, CYAN
+    gaugeCtx.fillStyle = CYAN;
+    gaugeCtx.fillRect(4, centerY, w - 8, barH);
+  }
+
+  // Center mark (0W)
+  gaugeCtx.fillStyle = WHITE;
+  gaugeCtx.fillRect(0, centerY - 1, w, 2);
+
+  // Tick marks every kW
+  gaugeCtx.fillStyle = DIM;
+  const maxKW = Math.ceil(MAX_TOTAL_W / 1000);
+  for (let kw = 1; kw <= maxKW; kw++) {
+    const offset = (kw / MAX_TOTAL_W) * centerY;
+    // Up ticks (consumption)
+    if (centerY - offset > 0) {
+      gaugeCtx.fillRect(0, centerY - offset, w, 1);
+    }
+    // Down ticks (export)
+    if (centerY + offset < h) {
+      gaugeCtx.fillRect(0, centerY + offset, w, 1);
+    }
+  }
+}
+
+/* ── ANIMATION LOOP ─────────────────────────────── */
+function animate() {
+  // Lerp the display wattage
+  displayW += (currentW - displayW) * 0.09;
+  if (Math.abs(displayW - currentW) < 0.5) displayW = currentW;
+
+  // Lerp gauge
+  gaugeAnimW += (currentW - gaugeAnimW) * 0.09;
+  if (Math.abs(gaugeAnimW - currentW) < 0.5) gaugeAnimW = currentW;
+
+  // Big number
+  const absW = Math.abs(Math.round(displayW));
+  $bigValue.textContent = absW;
+
+  const exporting = displayW < -5;
+  $bigValue.classList.toggle('exporting', exporting);
+  $bigDir.classList.toggle('exporting', exporting);
+
+  if (exporting) {
+    $bigDir.innerHTML = '&#9664; SOLAR EXPORT &#9664;';
+  } else if (displayW > 5) {
+    $bigDir.innerHTML = '&#9654; GRID IMPORT &#9654;';
+  } else {
+    $bigDir.textContent = '-- STANDBY --';
+  }
+
+  // Draw gauge
+  drawGauge();
+
+  requestAnimationFrame(animate);
+}
+
+/* ── INIT ───────────────────────────────────────── */
+window.addEventListener('DOMContentLoaded', () => {
+  resizeGauge();
+  initChart();
+  fetchStats();
+  fetchHistory();
+
+  // Periodic refresh
+  setInterval(fetchStats, 30000);
+  setInterval(fetchHistory, 60000);
+
+  requestAnimationFrame(animate);
+});
+
+window.addEventListener('resize', () => {
+  resizeGauge();
+});
+
+/* ── ELECTRON INTEGRATION ───────────────────────── */
+(function initElectron() {
+  const api = window.electronAPI;
+  if (!api) return;
+  document.body.classList.add('is-electron');
+})();
+</script>
+</body>
+</html>
