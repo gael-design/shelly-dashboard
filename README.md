@@ -4,6 +4,8 @@ Real-time energy monitoring dashboard for **Shelly EM Gen3** (2-channel) devices
 
 ![Dashboard Screenshot](https://img.shields.io/badge/status-active-brightgreen) ![Electron](https://img.shields.io/badge/electron-31.x-blue) ![Node](https://img.shields.io/badge/node-18%2B-green)
 
+> **Windows users:** Download the ready-to-run portable `.exe` from the [Releases page](https://github.com/gael-design/shelly-dashboard/releases) — no installation required.
+
 ## Screenshots
 
 | Cyber (default) | Plasma | Solar |
@@ -199,15 +201,20 @@ Right-click the system tray icon → **Mode widget** to switch to a compact 420�
 
 ---
 
-## Build a Portable .exe
+## Download the Portable .exe
 
-To create a standalone Windows executable that runs without Node.js installed:
+A pre-built Windows executable is available on the [Releases page](https://github.com/gael-design/shelly-dashboard/releases). Download `PowerStation-1.0.0-portable.exe` (~70 MB), double-click it, and you're done — no Node.js or installation required.
+
+### Build it yourself
+
+If you prefer to build from source:
 
 ```bash
+npm install
 npm run build
 ```
 
-The output file will be at `dist/PowerStation-1.0.0-portable.exe` (~70 MB). You can copy this file to any Windows PC and run it directly — no installation needed.
+The output file will be at `dist/PowerStation-1.0.0-portable.exe`. You can copy this file to any Windows PC and run it directly.
 
 > **Note:** The build may show a `.7z` error at the end — this is a known false positive. Check the `dist/` folder, the `.exe` should be there.
 
