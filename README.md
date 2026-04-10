@@ -4,6 +4,16 @@ Real-time energy monitoring dashboard for **Shelly EM Gen3** (2-channel) devices
 
 ![Dashboard Screenshot](https://img.shields.io/badge/status-active-brightgreen) ![Electron](https://img.shields.io/badge/electron-31.x-blue) ![Node](https://img.shields.io/badge/node-18%2B-green)
 
+## Screenshots
+
+| Cyber (default) | Plasma | Solar |
+|:---:|:---:|:---:|
+| ![Cyber](Cyber.png) | ![Plasma](Plasma.png) | ![Solar](Solar.png) |
+
+| Arctic | Matrix |
+|:---:|:---:|
+| ![Arctic](Artic.png) | ![Matrix](Matrix.png) |
+
 ## Features
 
 - **Live power gauge** — Animated canvas gauge with particles, glow effects, and smooth needle interpolation
