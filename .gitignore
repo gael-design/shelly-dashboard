@@ -1,0 +1,10 @@
+node_modules/
+dist/
+readings.json
+readings.db
+settings.json
+*.exe
+*.log
+.claude/
+CLAUDE.md
+WhatsApp*

@@ -1,0 +1,1662 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>POWER STATION · REACTOR CONTROL</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;600;800&family=Space+Grotesk:wght@300;400;500;700&display=swap" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"></script>
+  <style>
+    /* ── THEME: CYBER (default) ─────────────────────────── */
+    :root, [data-theme="cyber"] {
+      --bg:          #000000;
+      --bg-surface:  rgba(6, 14, 26, 0.78);
+      --bg-deep:     rgba(0, 30, 50, 0.35);
+      --border:      rgba(0, 255, 200, 0.18);
+      --border-str:  rgba(0, 255, 200, 0.5);
+      --text:        #d9ecff;
+      --text-dim:    #7ba0c8;
+      --muted:       #3d5878;
+      --cyan:        #00ffc8;
+      --cyan-2:      #00e6ff;
+      --red:         #ff3d3d;
+      --red-2:       #ff6b00;
+      --amber:       #ffae00;
+      --gold:        #ffd700;
+      --violet:      #bc8cff;
+      --body-grad-1: rgba(0, 80, 120, 0.18);
+      --body-grad-2: rgba(255, 60, 0, 0.05);
+      --body-bg-top: #02060c;
+      --body-bg-mid: #000;
+      --body-bg-bot: #040810;
+      --grid-color:  rgba(0, 255, 200, 0.028);
+      --cyan-rgb:    0, 255, 200;
+      --red-rgb:     255, 61, 61;
+      --gold-rgb:    255, 215, 0;
+    }
+
+    /* ── THEME: PLASMA ── Violet/magenta/electric pink ── */
+    [data-theme="plasma"] {
+      --bg-surface:  rgba(18, 4, 28, 0.82);
+      --bg-deep:     rgba(40, 0, 60, 0.35);
+      --border:      rgba(200, 100, 255, 0.18);
+      --border-str:  rgba(200, 100, 255, 0.5);
+      --text:        #f0e0ff;
+      --text-dim:    #b088d0;
+      --muted:       #5a3878;
+      --cyan:        #d94fff;
+      --cyan-2:      #ff2ecb;
+      --red:         #ff2e6b;
+      --red-2:       #ff0055;
+      --amber:       #ff8c00;
+      --gold:        #ff6af0;
+      --violet:      #8c5cff;
+      --body-grad-1: rgba(100, 0, 160, 0.22);
+      --body-grad-2: rgba(255, 0, 100, 0.06);
+      --body-bg-top: #0a0014;
+      --body-bg-mid: #030008;
+      --body-bg-bot: #08001a;
+      --grid-color:  rgba(200, 100, 255, 0.025);
+      --cyan-rgb:    217, 79, 255;
+      --red-rgb:     255, 46, 107;
+      --gold-rgb:    255, 106, 240;
+    }
+
+    /* ── THEME: SOLAR ── Amber/orange/fire ─────────────── */
+    [data-theme="solar"] {
+      --bg-surface:  rgba(26, 14, 2, 0.82);
+      --bg-deep:     rgba(50, 25, 0, 0.35);
+      --border:      rgba(255, 170, 0, 0.18);
+      --border-str:  rgba(255, 170, 0, 0.5);
+      --text:        #fff2d9;
+      --text-dim:    #c89a5a;
+      --muted:       #785830;
+      --cyan:        #ffaa00;
+      --cyan-2:      #ff7700;
+      --red:         #ff2200;
+      --red-2:       #cc0000;
+      --amber:       #ffdd44;
+      --gold:        #ff6600;
+      --violet:      #ff9955;
+      --body-grad-1: rgba(160, 80, 0, 0.22);
+      --body-grad-2: rgba(255, 30, 0, 0.08);
+      --body-bg-top: #0c0600;
+      --body-bg-mid: #020100;
+      --body-bg-bot: #0a0400;
+      --grid-color:  rgba(255, 170, 0, 0.025);
+      --cyan-rgb:    255, 170, 0;
+      --red-rgb:     255, 34, 0;
+      --gold-rgb:    255, 102, 0;
+    }
+
+    /* ── THEME: ARCTIC ── Ice blue/white/frost ─────────── */
+    [data-theme="arctic"] {
+      --bg-surface:  rgba(8, 16, 30, 0.82);
+      --bg-deep:     rgba(10, 30, 60, 0.35);
+      --border:      rgba(120, 200, 255, 0.18);
+      --border-str:  rgba(120, 200, 255, 0.5);
+      --text:        #e8f4ff;
+      --text-dim:    #8ab8e0;
+      --muted:       #3a6088;
+      --cyan:        #78c8ff;
+      --cyan-2:      #40a0ff;
+      --red:         #ff5577;
+      --red-2:       #ff3355;
+      --amber:       #ffcc44;
+      --gold:        #88ddff;
+      --violet:      #aab8ff;
+      --body-grad-1: rgba(40, 100, 180, 0.20);
+      --body-grad-2: rgba(100, 60, 200, 0.05);
+      --body-bg-top: #020810;
+      --body-bg-mid: #000408;
+      --body-bg-bot: #040a14;
+      --grid-color:  rgba(120, 200, 255, 0.025);
+      --cyan-rgb:    120, 200, 255;
+      --red-rgb:     255, 85, 119;
+      --gold-rgb:    136, 221, 255;
+    }
+
+    /* ── THEME: MATRIX ── Pure green/hacker terminal ───── */
+    [data-theme="matrix"] {
+      --bg-surface:  rgba(0, 12, 0, 0.82);
+      --bg-deep:     rgba(0, 30, 0, 0.35);
+      --border:      rgba(0, 255, 65, 0.18);
+      --border-str:  rgba(0, 255, 65, 0.5);
+      --text:        #c0ffc0;
+      --text-dim:    #60a860;
+      --muted:       #2a5a2a;
+      --cyan:        #00ff41;
+      --cyan-2:      #33ff77;
+      --red:         #ff3333;
+      --red-2:       #cc2200;
+      --amber:       #aaff00;
+      --gold:        #55ff55;
+      --violet:      #88ff44;
+      --body-grad-1: rgba(0, 100, 30, 0.18);
+      --body-grad-2: rgba(0, 60, 0, 0.08);
+      --body-bg-top: #000a00;
+      --body-bg-mid: #000400;
+      --body-bg-bot: #000800;
+      --grid-color:  rgba(0, 255, 65, 0.03);
+      --cyan-rgb:    0, 255, 65;
+      --red-rgb:     255, 51, 51;
+      --gold-rgb:    85, 255, 85;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    html, body {
+      height: 100%;
+      overflow: hidden;
+      background: #000;
+    }
+
+    body {
+      font-family: 'Space Grotesk', system-ui, sans-serif;
+      color: var(--text);
+      background:
+        radial-gradient(ellipse 80% 60% at 50% 30%, var(--body-grad-1) 0%, transparent 70%),
+        radial-gradient(ellipse 70% 50% at 50% 85%, var(--body-grad-2) 0%, transparent 70%),
+        linear-gradient(180deg, var(--body-bg-top) 0%, var(--body-bg-mid) 50%, var(--body-bg-bot) 100%);
+      -webkit-font-smoothing: antialiased;
+    }
+
+    /* Subtle grid overlay */
+    body::before {
+      content: '';
+      position: fixed; inset: 0;
+      background-image:
+        linear-gradient(var(--grid-color) 1px, transparent 1px),
+        linear-gradient(90deg, var(--grid-color) 1px, transparent 1px);
+      background-size: 44px 44px;
+      pointer-events: none;
+      z-index: 0;
+      -webkit-mask-image: radial-gradient(ellipse at center, #000 25%, transparent 85%);
+      mask-image: radial-gradient(ellipse at center, #000 25%, transparent 85%);
+    }
+
+    /* CRT scanlines */
+    body::after {
+      content: '';
+      position: fixed; inset: 0;
+      background: repeating-linear-gradient(
+        0deg,
+        rgba(0,0,0,0) 0,
+        rgba(0,0,0,0) 2px,
+        rgba(255,255,255,0.012) 2px,
+        rgba(255,255,255,0.012) 4px
+      );
+      pointer-events: none; z-index: 1;
+    }
+
+    .cockpit {
+      position: relative; z-index: 2;
+      display: grid;
+      grid-template-rows: 48px 1fr 170px;
+      height: 100vh;
+      gap: 8px;
+      padding: 8px;
+    }
+
+    /* ═══ HUD TOP ══════════════════════════════════════════ */
+    .hud-top {
+      display: flex; align-items: center; gap: 22px;
+      padding: 0 20px;
+      background: var(--bg-surface);
+      border: 1px solid var(--border);
+      border-radius: 2px;
+      position: relative;
+      backdrop-filter: blur(8px);
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 12px;
+    }
+    .hud-top::before, .hud-top::after {
+      content: '';
+      position: absolute;
+      width: 36px; height: 1px;
+      background: var(--cyan);
+      box-shadow: 0 0 10px var(--cyan);
+      left: 50%; transform: translateX(-50%);
+    }
+    .hud-top::before { top: 0; }
+    .hud-top::after { bottom: 0; }
+
+    .brand { display: flex; align-items: center; gap: 12px; }
+    .led {
+      width: 11px; height: 11px; border-radius: 50%;
+      background: var(--cyan);
+      box-shadow: 0 0 16px var(--cyan), inset 0 0 4px rgba(255,255,255,0.5);
+      animation: ledPulse 2s ease-in-out infinite;
+    }
+    .led.err { background: var(--red); box-shadow: 0 0 16px var(--red); animation-duration: 0.6s; }
+    @keyframes ledPulse {
+      0%, 100% { opacity: 1; transform: scale(1); }
+      50%      { opacity: 0.45; transform: scale(0.8); }
+    }
+
+    .brand h1 {
+      font-family: 'Space Grotesk', sans-serif;
+      font-size: 14px; font-weight: 700;
+      letter-spacing: 0.18em;
+    }
+    .brand .sub {
+      color: var(--text-dim);
+      font-size: 10px; letter-spacing: 0.22em;
+      border-left: 1px solid var(--border);
+      padding-left: 12px;
+    }
+
+    .hud-center { flex: 1; text-align: center; }
+    .hud-center .label {
+      color: var(--text-dim);
+      font-size: 10px; letter-spacing: 0.18em;
+      margin-right: 8px;
+    }
+    .hud-center .value {
+      color: var(--cyan);
+      font-weight: 600; letter-spacing: 0.12em;
+      text-shadow: 0 0 8px rgba(var(--cyan-rgb), 0.4);
+    }
+    .hud-center .value.err { color: var(--red); text-shadow: 0 0 8px rgba(var(--red-rgb),0.5); }
+
+    .hud-right {
+      display: flex; gap: 18px; align-items: center;
+      color: var(--text-dim); font-size: 11px;
+    }
+    .hud-right .clock {
+      color: var(--cyan);
+      font-weight: 700; letter-spacing: 0.12em;
+      text-shadow: 0 0 6px rgba(var(--cyan-rgb),0.3);
+    }
+    .hud-right .uptime { opacity: 0.6; }
+
+    /* ═══ MAIN GRID ══════════════════════════════════════════ */
+    .main-grid {
+      display: grid;
+      grid-template-columns: 262px 1fr 262px;
+      gap: 8px;
+      overflow: hidden;
+      min-height: 0;
+    }
+
+    /* ═══ CARD BASE ══════════════════════════════════════════ */
+    .card {
+      background: var(--bg-surface);
+      border: 1px solid var(--border);
+      border-radius: 2px;
+      padding: 14px 16px;
+      position: relative;
+      backdrop-filter: blur(6px);
+      min-height: 0;
+    }
+    .card::before {
+      content: '';
+      position: absolute;
+      top: 0; left: 12px; right: 12px;
+      height: 1px;
+      background: linear-gradient(90deg, transparent, var(--cyan), transparent);
+      opacity: 0.45;
+    }
+
+    .card-label {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 9px;
+      font-weight: 600;
+      letter-spacing: 0.2em;
+      color: var(--text-dim);
+      text-transform: uppercase;
+      display: flex; align-items: center; gap: 8px;
+    }
+    .card-label::before {
+      content: '';
+      width: 6px; height: 6px;
+      background: var(--cyan);
+      box-shadow: 0 0 6px var(--cyan);
+    }
+    .c1-label .card-label::before { background: var(--violet); box-shadow: 0 0 6px var(--violet); }
+    .down .card-label::before { background: var(--red); box-shadow: 0 0 6px var(--red); }
+    .up   .card-label::before { background: var(--cyan); box-shadow: 0 0 6px var(--cyan); }
+
+    /* ═══ LEFT: VOIES ══════════════════════════════════════════ */
+    .voies-col {
+      display: grid;
+      grid-template-rows: 1fr 1fr;
+      gap: 8px;
+      min-height: 0;
+    }
+    .voie-card {
+      display: flex;
+      flex-direction: column;
+      transition: opacity 0.4s;
+    }
+    .voie-card.unused { opacity: 0.35; }
+
+    .voie-value-big {
+      font-family: 'JetBrains Mono', monospace;
+      font-weight: 800;
+      font-size: clamp(26px, 3.6vw, 44px);
+      line-height: 0.95;
+      letter-spacing: -0.03em;
+      margin: 12px 0 4px;
+      color: var(--text);
+      transition: color 0.4s, text-shadow 0.4s;
+    }
+    .voie-value-big.neg { color: var(--cyan); text-shadow: 0 0 20px rgba(var(--cyan-rgb),0.5); }
+    .voie-value-big.pos { color: var(--text); text-shadow: 0 0 16px rgba(217,236,255,0.2); }
+    .voie-value-big.zero { color: var(--muted); text-shadow: none; }
+    .voie-value-big sup {
+      font-size: 0.34em;
+      color: var(--text-dim);
+      font-weight: 400;
+      margin-left: 4px;
+      vertical-align: top;
+    }
+
+    .voie-bar-track {
+      height: 3px;
+      background: var(--bg-deep);
+      margin: 8px 0 12px;
+      position: relative;
+      overflow: hidden;
+    }
+    .voie-bar-fill {
+      position: absolute; top: 0; bottom: 0; left: 0;
+      background: linear-gradient(90deg, var(--cyan), var(--cyan-2));
+      box-shadow: 0 0 12px var(--cyan);
+      transition: width 0.8s ease;
+    }
+    .c1 .voie-bar-fill {
+      background: linear-gradient(90deg, var(--violet), #e0baff);
+      box-shadow: 0 0 12px var(--violet);
+    }
+
+    .voie-meta {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 6px;
+      margin-top: auto;
+    }
+    .meta-cell {
+      background: var(--bg-deep);
+      border-left: 2px solid var(--border);
+      padding: 5px 9px;
+    }
+    .meta-cell .m-label {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 8px;
+      color: var(--text-dim);
+      letter-spacing: 0.15em;
+    }
+    .meta-cell .m-val {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--text);
+    }
+
+    /* ═══ CENTER: MAIN GAUGE ══════════════════════════════════ */
+    .gauge-wrap {
+      position: relative;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background:
+        radial-gradient(ellipse at 50% 55%, rgba(0, 50, 90, 0.35) 0%, transparent 60%),
+        var(--bg-surface);
+      border: 1px solid var(--border);
+      border-radius: 2px;
+      overflow: hidden;
+      min-height: 0;
+      transition: box-shadow 0.4s;
+    }
+
+    /* Corner brackets - sci-fi frame */
+    .gauge-wrap .corner {
+      position: absolute;
+      width: 28px; height: 28px;
+      border: 1px solid var(--cyan);
+      pointer-events: none;
+      opacity: 0.8;
+    }
+    .gauge-wrap .corner.tl { top: 10px; left: 10px; border-right: none; border-bottom: none; }
+    .gauge-wrap .corner.tr { top: 10px; right: 10px; border-left: none; border-bottom: none; }
+    .gauge-wrap .corner.bl { bottom: 10px; left: 10px; border-right: none; border-top: none; }
+    .gauge-wrap .corner.br { bottom: 10px; right: 10px; border-left: none; border-top: none; }
+
+    .gauge-hud-title {
+      position: absolute;
+      top: 16px; left: 50%;
+      transform: translateX(-50%);
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 10px;
+      letter-spacing: 0.32em;
+      color: var(--text-dim);
+      white-space: nowrap;
+      z-index: 2;
+    }
+    .gauge-hud-title .on {
+      color: var(--cyan);
+      text-shadow: 0 0 8px var(--cyan);
+      margin-left: 6px;
+    }
+
+    #mainGauge {
+      display: block;
+      position: absolute;
+      top: 0; left: 0;
+      width: 100%; height: 100%;
+    }
+
+    .gauge-readout {
+      position: absolute;
+      bottom: 22%;
+      left: 50%;
+      transform: translateX(-50%);
+      text-align: center;
+      pointer-events: none;
+      z-index: 3;
+      width: 80%;
+    }
+    .gauge-value {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: clamp(48px, 6.8vw, 86px);
+      font-weight: 800;
+      line-height: 0.85;
+      letter-spacing: -0.05em;
+      color: var(--text);
+      transition: color 0.4s, text-shadow 0.4s;
+    }
+    .gauge-value.neg  { color: var(--cyan); text-shadow: 0 0 40px var(--cyan), 0 0 90px rgba(var(--cyan-rgb),0.5); }
+    .gauge-value.pos  { color: var(--red);  text-shadow: 0 0 40px var(--red),  0 0 90px rgba(var(--red-rgb),0.5); }
+    .gauge-value.zero { color: var(--gold); text-shadow: 0 0 30px var(--gold); }
+    .gauge-value sup {
+      font-size: 0.28em; font-weight: 400;
+      color: var(--text-dim);
+      text-shadow: none;
+      margin-left: 6px;
+      vertical-align: top;
+    }
+    .gauge-state {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 11px;
+      letter-spacing: 0.3em;
+      color: var(--text-dim);
+      margin-top: 8px;
+      text-transform: uppercase;
+      transition: color 0.4s, text-shadow 0.4s;
+    }
+    .gauge-state.neg  { color: var(--cyan); text-shadow: 0 0 8px var(--cyan); }
+    .gauge-state.pos  { color: var(--red);  text-shadow: 0 0 8px var(--red); }
+    .gauge-state.zero { color: var(--gold); text-shadow: 0 0 8px var(--gold); }
+
+    /* Alert pulse — reactor containment breach */
+    .gauge-wrap.alert-on {
+      animation: alertFrame 1.1s ease-in-out infinite;
+      border-color: var(--red);
+    }
+    .gauge-wrap.alert-on .corner { border-color: var(--red); }
+    @keyframes alertFrame {
+      0%, 100% { box-shadow: inset 0 0 0 0 rgba(var(--red-rgb),0), 0 0 0 0 rgba(var(--red-rgb),0); }
+      50%      { box-shadow: inset 0 0 80px -20px rgba(var(--red-rgb),0.9), 0 0 40px rgba(var(--red-rgb),0.4); }
+    }
+    .gauge-wrap.alert-on .gauge-value { animation: alertScale 0.6s ease-in-out infinite; }
+    @keyframes alertScale {
+      0%, 100% { transform: scale(1); }
+      50%      { transform: scale(1.04); }
+    }
+
+    /* ═══ RIGHT: STATS COLUMN ══════════════════════════════════ */
+    .stats-col {
+      display: grid;
+      grid-template-rows: 1fr 1fr 0.85fr;
+      gap: 8px;
+      min-height: 0;
+    }
+    .big-stat {
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+    }
+    .big-stat .big-val {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: clamp(28px, 3.4vw, 44px);
+      font-weight: 800;
+      line-height: 0.95;
+      letter-spacing: -0.03em;
+      margin-top: 10px;
+      color: var(--text);
+      display: flex;
+      align-items: baseline;
+      gap: 6px;
+    }
+    .big-stat.down .big-val { color: var(--red);  text-shadow: 0 0 18px rgba(var(--red-rgb),0.4); }
+    .big-stat.up   .big-val { color: var(--cyan); text-shadow: 0 0 18px rgba(var(--cyan-rgb),0.4); }
+    .big-stat .arrow { font-size: 0.5em; opacity: 0.7; }
+    .big-stat .unit {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 10px;
+      color: var(--text-dim);
+      letter-spacing: 0.22em;
+      margin-top: 6px;
+    }
+
+    .stat-pair {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+      min-height: 0;
+    }
+    .exp-pair {
+      grid-template-columns: 1fr;
+      grid-template-rows: 1fr 1fr;
+    }
+    .exp-pair .big-stat .big-val {
+      font-size: clamp(22px, 2.6vw, 32px);
+    }
+    .stat-pair .card {
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      padding: 12px 14px;
+    }
+    .mid-val {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: clamp(20px, 2.2vw, 28px);
+      font-weight: 700;
+      line-height: 1;
+      color: var(--text);
+      margin-top: 8px;
+    }
+    .mid-unit {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 9px;
+      color: var(--text-dim);
+      letter-spacing: 0.2em;
+      margin-top: 4px;
+    }
+
+    /* ═══ BOTTOM: TELEMETRY ══════════════════════════════════════ */
+    .telemetry {
+      display: grid;
+      grid-template-rows: auto 1fr;
+      gap: 8px;
+      background: var(--bg-surface);
+      border: 1px solid var(--border);
+      border-radius: 2px;
+      padding: 12px 18px 14px;
+      position: relative;
+      overflow: hidden;
+      min-height: 0;
+    }
+    .telemetry::before {
+      content: '';
+      position: absolute;
+      top: 0; left: 12px; right: 12px;
+      height: 1px;
+      background: linear-gradient(90deg, transparent, var(--cyan), transparent);
+      opacity: 0.45;
+    }
+
+    .tel-header {
+      display: flex;
+      align-items: center;
+      gap: 24px;
+      justify-content: space-between;
+      flex-wrap: wrap;
+    }
+    .tel-title {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 10px;
+      letter-spacing: 0.28em;
+      color: var(--text-dim);
+      display: flex; align-items: center; gap: 10px;
+    }
+    .tel-title::before {
+      content: '';
+      width: 6px; height: 6px;
+      background: var(--cyan);
+      box-shadow: 0 0 8px var(--cyan);
+      animation: ledPulse 2s ease-in-out infinite;
+    }
+
+    .tel-stats { display: flex; gap: 22px; }
+    .tstat {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 10px;
+      color: var(--text-dim);
+      letter-spacing: 0.12em;
+      display: flex; gap: 6px; align-items: baseline;
+    }
+    .tstat b {
+      font-size: 15px; font-weight: 700;
+    }
+    .tstat.min b { color: var(--cyan); text-shadow: 0 0 8px rgba(var(--cyan-rgb),0.3); }
+    .tstat.max b { color: var(--red);  text-shadow: 0 0 8px rgba(var(--red-rgb),0.3); }
+    .tstat.avg b { color: var(--amber); text-shadow: 0 0 8px rgba(var(--cyan-rgb),0.3); }
+
+    .tel-settings {
+      display: flex; align-items: center; gap: 8px;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 10px;
+      color: var(--text-dim);
+      letter-spacing: 0.15em;
+    }
+    .tel-settings input {
+      background: var(--bg-deep);
+      border: 1px solid var(--border);
+      color: var(--cyan);
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 11px;
+      padding: 5px 10px;
+      width: 90px;
+      border-radius: 2px;
+    }
+    .tel-settings input:focus { outline: 1px solid var(--cyan); box-shadow: 0 0 10px rgba(var(--cyan-rgb),0.3); }
+    .tel-settings button {
+      background: transparent;
+      border: 1px solid var(--cyan);
+      color: var(--cyan);
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 10px;
+      font-weight: 600;
+      padding: 5px 14px;
+      letter-spacing: 0.18em;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .tel-settings button:hover {
+      background: var(--cyan);
+      color: #000;
+      box-shadow: 0 0 16px var(--cyan);
+    }
+    .tel-settings .saved-ok {
+      color: var(--cyan);
+      opacity: 0;
+      transition: opacity 0.3s;
+    }
+    .tel-settings .saved-ok.show { opacity: 1; }
+
+    /* ═══ Device health strip (in telemetry header) ══════════ */
+    .dev-health {
+      display: flex;
+      gap: 18px;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 10px;
+      color: var(--text-dim);
+      letter-spacing: 0.12em;
+    }
+    .dev-health .dh {
+      display: flex;
+      gap: 6px;
+      align-items: baseline;
+      white-space: nowrap;
+    }
+    .dev-health .dh .lbl { opacity: 0.55; font-size: 9px; }
+    .dev-health .dh b {
+      font-size: 12px;
+      font-weight: 700;
+      color: var(--text);
+    }
+    .dev-health .dh.freq b { color: var(--cyan); text-shadow: 0 0 6px rgba(var(--cyan-rgb),0.3); }
+    .dev-health .dh.temp b.warm { color: var(--amber); text-shadow: 0 0 6px rgba(var(--cyan-rgb),0.4); }
+    .dev-health .dh.temp b.hot  { color: var(--red);   text-shadow: 0 0 8px rgba(var(--red-rgb),0.5); }
+    .dev-health .dh.rssi b.weak { color: var(--amber); }
+    .dev-health .dh.rssi b.bad  { color: var(--red); }
+    .dev-health .dh.fw .upd {
+      color: var(--amber);
+      text-shadow: 0 0 6px rgba(var(--cyan-rgb),0.4);
+      margin-left: 4px;
+    }
+
+    /* ═══ Firmware update badge (HUD) ════════════════════════ */
+    .fw-badge {
+      display: none;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 9px;
+      font-weight: 700;
+      letter-spacing: 0.14em;
+      color: var(--amber);
+      border: 1px solid var(--amber);
+      padding: 2px 6px;
+      border-radius: 2px;
+      margin-left: 8px;
+      background: rgba(var(--cyan-rgb),0.06);
+      box-shadow: 0 0 8px rgba(var(--cyan-rgb),0.25);
+      cursor: help;
+      animation: fwPulse 3s ease-in-out infinite;
+    }
+    .fw-badge.show { display: inline-block; }
+    @keyframes fwPulse {
+      0%, 100% { box-shadow: 0 0 6px rgba(var(--cyan-rgb),0.2); }
+      50%      { box-shadow: 0 0 14px rgba(var(--cyan-rgb),0.5); }
+    }
+
+    /* ═══ Theme switcher button ═════════════════════════════ */
+    .theme-btn {
+      background: transparent;
+      border: 1px solid var(--border-str);
+      color: var(--cyan);
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 9px;
+      font-weight: 600;
+      letter-spacing: 0.14em;
+      padding: 3px 8px;
+      cursor: pointer;
+      transition: all 0.25s;
+      border-radius: 2px;
+      text-transform: uppercase;
+      white-space: nowrap;
+    }
+    .theme-btn:hover {
+      background: var(--cyan);
+      color: #000;
+      box-shadow: 0 0 16px var(--cyan);
+    }
+
+    .chart-area {
+      position: relative;
+      min-height: 0;
+    }
+    .chart-area canvas {
+      position: absolute !important;
+      inset: 0;
+    }
+
+    /* ═══ Responsive ══════════════════════════════════════════ */
+    @media (max-width: 1100px) {
+      .main-grid { grid-template-columns: 220px 1fr 220px; }
+    }
+    @media (max-width: 900px) {
+      .main-grid { grid-template-columns: 190px 1fr 190px; }
+      .brand .sub { display: none; }
+    }
+    @media (max-height: 720px) {
+      .cockpit { grid-template-rows: 44px 1fr 148px; }
+    }
+    @media (max-height: 640px) {
+      .cockpit { grid-template-rows: 42px 1fr 130px; }
+    }
+
+    /* ═══ Electron — drag region & window controls ═══════════ */
+    body.is-electron .hud-top { -webkit-app-region: drag; }
+    body.is-electron .hud-top .no-drag,
+    body.is-electron .win-ctrls { -webkit-app-region: no-drag; }
+
+    .win-ctrls {
+      display: none;
+      gap: 4px;
+      margin-left: 14px;
+      padding-left: 14px;
+      border-left: 1px solid var(--border);
+      align-items: center;
+    }
+    body.is-electron .win-ctrls { display: flex; }
+    .win-btn {
+      width: 28px; height: 22px;
+      display: inline-flex; align-items: center; justify-content: center;
+      background: transparent;
+      border: 1px solid var(--border);
+      color: var(--text-dim);
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 11px;
+      cursor: pointer;
+      border-radius: 2px;
+      transition: all 0.15s;
+    }
+    .win-btn:hover {
+      color: var(--cyan);
+      border-color: var(--cyan);
+      box-shadow: 0 0 8px rgba(var(--cyan-rgb),0.35);
+      background: rgba(var(--cyan-rgb),0.05);
+    }
+    .win-btn.close:hover {
+      color: var(--red);
+      border-color: var(--red);
+      box-shadow: 0 0 8px rgba(var(--red-rgb),0.4);
+      background: rgba(var(--red-rgb),0.06);
+    }
+    .win-btn svg { width: 11px; height: 11px; stroke: currentColor; stroke-width: 1.6; fill: none; }
+
+    /* ═══ WIDGET MODE — compact floating ═══════════════════════ */
+    body.widget-mode { overflow: hidden; }
+    body.widget-mode .cockpit {
+      grid-template-rows: 34px 1fr;
+      gap: 6px;
+      padding: 6px;
+    }
+    body.widget-mode .hud-top {
+      padding: 0 10px;
+      gap: 10px;
+      font-size: 10px;
+    }
+    body.widget-mode .brand h1 { font-size: 11px; letter-spacing: 0.14em; }
+    body.widget-mode .brand .sub,
+    body.widget-mode .hud-center .label,
+    body.widget-mode .hud-right .uptime,
+    body.widget-mode .hud-right .clock { display: none; }
+    body.widget-mode .hud-center {
+      text-align: right;
+      font-size: 9px;
+    }
+    body.widget-mode .hud-center .value {
+      font-size: 10px;
+    }
+
+    body.widget-mode .main-grid {
+      grid-template-columns: 1fr;
+    }
+    body.widget-mode .voies-col,
+    body.widget-mode .stats-col,
+    body.widget-mode .telemetry { display: none; }
+
+    body.widget-mode .gauge-wrap {
+      padding: 4px;
+    }
+    body.widget-mode .gauge-hud-title { font-size: 8px; top: 6px; }
+    body.widget-mode .gauge-readout { bottom: 14px; }
+    body.widget-mode .gauge-value { font-size: 32px; }
+    body.widget-mode .gauge-state { font-size: 9px; }
+    body.widget-mode .corner { width: 12px; height: 12px; }
+  </style>
+</head>
+<body>
+
+<div class="cockpit">
+
+  <!-- ═══ HUD TOP ═══════════════════════════════════════════ -->
+  <header class="hud-top">
+    <div class="brand">
+      <span class="led" id="led"></span>
+      <h1>⚡ POWER STATION</h1>
+      <span class="sub">REACTOR CONTROL</span>
+      <span class="fw-badge" id="fwBadge" title="Mise à jour firmware Shelly disponible">↑ FW</span>
+    </div>
+    <div class="hud-center">
+      <span class="label">STATUS //</span>
+      <span class="value" id="statusLabel">INIT…</span>
+    </div>
+    <div class="hud-right">
+      <span class="uptime">T+<span id="uptime">00:00:00</span></span>
+      <span class="clock" id="clock">--:--:--</span>
+      <button class="theme-btn no-drag" id="btnTheme" title="Changer de thème">CYBER</button>
+      <div class="win-ctrls no-drag">
+        <button class="win-btn" id="btnWidget" title="Basculer mode widget (Ctrl+Alt+W)">
+          <svg viewBox="0 0 12 12"><rect x="1" y="1" width="10" height="10"/><rect x="7" y="7" width="4" height="4" fill="currentColor"/></svg>
+        </button>
+        <button class="win-btn" id="btnMin" title="Réduire">
+          <svg viewBox="0 0 12 12"><line x1="2" y1="10" x2="10" y2="10"/></svg>
+        </button>
+        <button class="win-btn close" id="btnClose" title="Masquer dans le tray">
+          <svg viewBox="0 0 12 12"><line x1="2" y1="2" x2="10" y2="10"/><line x1="10" y1="2" x2="2" y2="10"/></svg>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- ═══ MAIN GRID ═════════════════════════════════════════ -->
+  <div class="main-grid">
+
+    <!-- ── LEFT: VOIES ── -->
+    <aside class="voies-col">
+      <div class="card voie-card c0" id="card-c0">
+        <div class="card-label">VOIE 01 // CH-A</div>
+        <div class="voie-value-big" id="c0-w">0<sup>W</sup></div>
+        <div class="voie-bar-track"><div class="voie-bar-fill" id="c0-bar"></div></div>
+        <div class="voie-meta">
+          <div class="meta-cell"><div class="m-label">V</div><div class="m-val" id="c0-v">—</div></div>
+          <div class="meta-cell"><div class="m-label">A</div><div class="m-val" id="c0-a">—</div></div>
+          <div class="meta-cell"><div class="m-label">PF</div><div class="m-val" id="c0-pf">—</div></div>
+          <div class="meta-cell"><div class="m-label">VA</div><div class="m-val" id="c0-va">—</div></div>
+        </div>
+      </div>
+      <div class="stat-pair exp-pair">
+        <div class="card big-stat up">
+          <div class="card-label">7D // SOLAR EXPORT</div>
+          <div class="big-val"><span class="arrow">↑</span><span id="kwh-exp-week">0.0</span></div>
+          <div class="unit">KWH TO GRID</div>
+        </div>
+        <div class="card big-stat up">
+          <div class="card-label">30D // SOLAR EXPORT</div>
+          <div class="big-val"><span class="arrow">↑</span><span id="kwh-exp-month">0.0</span></div>
+          <div class="unit">KWH TO GRID</div>
+        </div>
+      </div>
+    </aside>
+
+    <!-- ── CENTER: MAIN GAUGE ── -->
+    <section class="gauge-wrap" id="gaugeWrap">
+      <span class="corner tl"></span>
+      <span class="corner tr"></span>
+      <span class="corner bl"></span>
+      <span class="corner br"></span>
+      <div class="gauge-hud-title">GRID FLOW<span class="on">● LIVE</span></div>
+      <canvas id="mainGauge"></canvas>
+      <div class="gauge-readout">
+        <div class="gauge-value zero" id="gaugeValue"><span id="gvNum">0</span><sup>W</sup></div>
+        <div class="gauge-state zero" id="gaugeState">━ STANDBY ━</div>
+      </div>
+    </section>
+
+    <!-- ── RIGHT: STATS ── -->
+    <aside class="stats-col">
+      <div class="card big-stat down">
+        <div class="card-label">TODAY // GRID IMPORT</div>
+        <div class="big-val"><span class="arrow">↓</span><span id="kwh-imp">0.00</span></div>
+        <div class="unit">KWH FROM GRID</div>
+      </div>
+      <div class="card big-stat up">
+        <div class="card-label">TODAY // SOLAR EXPORT</div>
+        <div class="big-val"><span class="arrow">↑</span><span id="kwh-exp">0.00</span></div>
+        <div class="unit">KWH TO GRID</div>
+      </div>
+      <div class="stat-pair">
+        <div class="card">
+          <div class="card-label">7D NET</div>
+          <div class="mid-val" id="kwh-week">0.0</div>
+          <div class="mid-unit">KWH</div>
+        </div>
+        <div class="card">
+          <div class="card-label">30D NET</div>
+          <div class="mid-val" id="kwh-month">0.0</div>
+          <div class="mid-unit">KWH</div>
+        </div>
+      </div>
+    </aside>
+
+  </div>
+
+  <!-- ═══ BOTTOM: TELEMETRY ═════════════════════════════════ -->
+  <footer class="telemetry">
+    <div class="tel-header">
+      <div class="tel-title">24H GRID TELEMETRY</div>
+      <div class="tel-stats">
+        <div class="tstat min">MIN <b id="stat-min">0</b> W</div>
+        <div class="tstat max">MAX <b id="stat-max">0</b> W</div>
+        <div class="tstat avg">AVG <b id="stat-avg">0</b> W</div>
+      </div>
+      <div class="dev-health" id="devHealth">
+        <div class="dh freq"><span class="lbl">FREQ</span><b id="dh-freq">—</b><span class="lbl">Hz</span></div>
+        <div class="dh temp"><span class="lbl">TEMP</span><b id="dh-temp">—</b><span class="lbl">°C</span></div>
+        <div class="dh rssi"><span class="lbl">RSSI</span><b id="dh-rssi">—</b><span class="lbl">dBm</span></div>
+        <div class="dh up"><span class="lbl">UP</span><b id="dh-uptime">—</b></div>
+        <div class="dh fw"><span class="lbl">FW</span><b id="dh-fw">—</b><span class="upd" id="dh-fw-upd"></span></div>
+      </div>
+      <div class="tel-settings">
+        <label>ALERT THRESHOLD</label>
+        <input type="number" id="alertInput" step="100" min="100">
+        <button onclick="saveAlert()">SET</button>
+        <span class="saved-ok" id="savedOk">✓</span>
+      </div>
+    </div>
+    <div class="chart-area"><canvas id="chart"></canvas></div>
+  </footer>
+
+</div>
+
+<script>
+// ══════════════════════════════════════════════════════════
+// POWER STATION · REACTOR CONTROL
+// ══════════════════════════════════════════════════════════
+
+const MAX_CH_W    = 3680;   // 16 A × 230 V per channel
+const MAX_TOTAL_W = 7360;   // full scale of bi-directional gauge
+const startTime   = Date.now();
+
+let alertThreshold = 5000;
+let histChart      = null;
+
+// ── Clock (Shelly uptime is fed from WS live messages) ──
+function tickClock() {
+  const now = new Date();
+  document.getElementById('clock').textContent = now.toLocaleTimeString('fr-FR');
+}
+setInterval(tickClock, 1000);
+tickClock();
+
+// ── Format helpers ───────────────────────────────────────
+const fr = v => typeof v === 'number' ? v.toLocaleString('fr-FR') : '—';
+function f(v, dec = 1, unit = '') {
+  if (v == null || isNaN(v)) return '—';
+  return v.toFixed(dec) + (unit ? '\u202f' + unit : '');
+}
+
+// ── Theme switcher ───────────────────────────────────────
+const THEMES = ['cyber', 'plasma', 'solar', 'arctic', 'matrix'];
+const THEME_LABELS = { cyber: 'CYBER', plasma: 'PLASMA', solar: 'SOLAR', arctic: 'ARCTIC', matrix: 'MATRIX' };
+let currentTheme = localStorage.getItem('ps-theme') || 'cyber';
+
+function applyTheme(name) {
+  currentTheme = name;
+  document.body.setAttribute('data-theme', name);
+  document.getElementById('btnTheme').textContent = THEME_LABELS[name];
+  localStorage.setItem('ps-theme', name);
+  // Force chart rebuild with new colors on next load
+  if (typeof histChart !== 'undefined' && histChart) { histChart.destroy(); histChart = null; loadHistory(); }
+}
+applyTheme(currentTheme);
+
+document.getElementById('btnTheme').addEventListener('click', () => {
+  const idx = (THEMES.indexOf(currentTheme) + 1) % THEMES.length;
+  applyTheme(THEMES[idx]);
+});
+
+// Helper: read CSS var as string (for canvas/chart)
+function cv(name) { return getComputedStyle(document.body).getPropertyValue(name).trim(); }
+function cvRGB(name) { return cv(name).split(',').map(Number); }
+
+// ── WebSocket ────────────────────────────────────────────
+let ws;
+function connect() {
+  ws = new WebSocket(`ws://${location.host}`);
+  ws.onopen    = ()  => setStatus(true);
+  ws.onclose   = ()  => { setStatus(false); setTimeout(connect, 3000); };
+  ws.onerror   = ()  => ws.close();
+  ws.onmessage = e  => {
+    const msg = JSON.parse(e.data);
+    if (msg.type === 'live')  updateLive(msg.data);
+    if (msg.type === 'error') setStatus(false, msg.msg);
+  };
+}
+connect();
+
+function setStatus(ok, label = '') {
+  document.getElementById('led').className = 'led' + (ok ? '' : ' err');
+  const lbl = document.getElementById('statusLabel');
+  lbl.className = 'value' + (ok ? '' : ' err');
+  lbl.textContent = ok
+    ? 'ONLINE · NOMINAL'
+    : ('OFFLINE' + (label ? ' // ' + label.toUpperCase().slice(0, 40) : ''));
+}
+
+// ══════════════════════════════════════════════════════════
+// MAIN GAUGE — canvas animated with particles & glow
+// ══════════════════════════════════════════════════════════
+
+const gCvs = document.getElementById('mainGauge');
+const gCtx = gCvs.getContext('2d');
+
+const gauge = {
+  current: 0,
+  target:  0,
+  max:     MAX_TOTAL_W,
+  particles:   [],
+  needleHist:  [],
+  w: 0, h: 0, cx: 0, cy: 0, r: 0,
+};
+
+const START = Math.PI;       // left  = injection max
+const MID   = 1.5 * Math.PI; // top   = zero
+const END   = 2 * Math.PI;   // right = consumption max
+const SPAN  = Math.PI;
+
+function sizeGauge() {
+  const wrap = gCvs.parentElement;
+  const w = wrap.clientWidth;
+  const h = wrap.clientHeight;
+  if (!w || !h) return;
+  const dpr = window.devicePixelRatio || 1;
+  gCvs.width  = w * dpr;
+  gCvs.height = h * dpr;
+  gCvs.style.width  = w + 'px';
+  gCvs.style.height = h + 'px';
+  gCtx.setTransform(dpr, 0, 0, dpr, 0, 0);
+
+  gauge.w = w;
+  gauge.h = h;
+  gauge.cx = w / 2;
+  gauge.cy = h * 0.72;
+  gauge.r  = Math.min(w / 2 - 40, h * 0.6);
+}
+window.addEventListener('resize', sizeGauge);
+setTimeout(sizeGauge, 60);
+setTimeout(sizeGauge, 300);
+
+function spawnParticle() {
+  const ratio = gauge.current / gauge.max;
+  const absR  = Math.abs(ratio);
+  if (absR < 0.02) return;
+  const direction = ratio > 0 ? 1 : -1;
+  const isInj     = direction < 0;
+  const progress  = Math.random() * absR;
+  const angle     = MID + direction * progress * (SPAN / 2);
+  const arcR      = gauge.r - 36;
+  gauge.particles.push({
+    angle,
+    angleSpeed: direction * (0.006 + Math.random() * 0.022),
+    radius: arcR - 6 + (Math.random() - 0.5) * 16,
+    life:   1,
+    size:   0.8 + Math.random() * 2.2,
+    color:  isInj ? cvRGB('--cyan-rgb') : cvRGB('--red-rgb'),
+  });
+}
+
+function updateParticles() {
+  if (gauge.particles.length < 80) {
+    const intensity = Math.abs(gauge.current) / gauge.max;
+    const n = Math.ceil(intensity * 3);
+    for (let i = 0; i < n; i++) {
+      if (Math.random() < 0.55) spawnParticle();
+    }
+  }
+  for (const p of gauge.particles) {
+    p.angle += p.angleSpeed;
+    p.life  -= 0.013;
+  }
+  gauge.particles = gauge.particles.filter(p => p.life > 0);
+}
+
+function drawGauge() {
+  const { cx, cy, r, current, max, w, h } = gauge;
+  if (!r) return;
+  gCtx.clearRect(0, 0, w, h);
+
+  // ── Outer faint ring
+  gCtx.beginPath();
+  gCtx.arc(cx, cy, r + 8, START - 0.06, END + 0.06);
+  gCtx.strokeStyle = `rgba(${cv('--cyan-rgb')},0.22)`;
+  gCtx.lineWidth = 1;
+  gCtx.stroke();
+
+  // ── Tick marks (60)
+  const TICKS = 60;
+  for (let i = 0; i <= TICKS; i++) {
+    const t = i / TICKS;
+    const angle = START + t * SPAN;
+    const isMajor = i % 10 === 0;
+    const isMid   = i % 5 === 0 && !isMajor;
+    const len = isMajor ? 14 : isMid ? 9 : 5;
+    const alpha = isMajor ? 0.85 : isMid ? 0.5 : 0.22;
+    const isZero = i === TICKS / 2;
+    const rgb = isZero ? '255, 215, 0' : '0, 255, 200';
+
+    const r1 = r - 2;
+    const r2 = r - 2 - len;
+    const sx = cx + r1 * Math.cos(angle);
+    const sy = cy + r1 * Math.sin(angle);
+    const ex = cx + r2 * Math.cos(angle);
+    const ey = cy + r2 * Math.sin(angle);
+
+    gCtx.beginPath();
+    gCtx.moveTo(sx, sy);
+    gCtx.lineTo(ex, ey);
+    gCtx.strokeStyle = `rgba(${rgb}, ${alpha})`;
+    gCtx.lineWidth = isMajor ? 2.2 : 1.3;
+    gCtx.stroke();
+  }
+
+  // ── Main arc background
+  const arcR = r - 36;
+  const arcW = Math.max(18, r * 0.14);
+
+  gCtx.beginPath();
+  gCtx.arc(cx, cy, arcR, START, END);
+  gCtx.strokeStyle = 'rgba(10, 28, 48, 0.85)';
+  gCtx.lineWidth = arcW + 2;
+  gCtx.lineCap = 'butt';
+  gCtx.stroke();
+
+  // Faint zone tints
+  gCtx.beginPath();
+  gCtx.arc(cx, cy, arcR, START, MID);
+  gCtx.strokeStyle = `rgba(${cv('--cyan-rgb')},0.08)`;
+  gCtx.lineWidth = arcW;
+  gCtx.stroke();
+  gCtx.beginPath();
+  gCtx.arc(cx, cy, arcR, MID, END);
+  gCtx.strokeStyle = `rgba(${cv('--red-rgb')},0.08)`;
+  gCtx.lineWidth = arcW;
+  gCtx.stroke();
+
+  // ── Active fill
+  const ratio = Math.max(-1, Math.min(1, current / max));
+  const needleAngle = MID + ratio * (SPAN / 2);
+
+  if (Math.abs(current) > 4) {
+    const isInj = ratio < 0;
+    const color = isInj ? cv('--cyan') : cv('--red');
+
+    gCtx.save();
+    gCtx.shadowColor = color;
+    gCtx.shadowBlur  = 30;
+    gCtx.beginPath();
+    if (isInj) gCtx.arc(cx, cy, arcR, needleAngle, MID);
+    else       gCtx.arc(cx, cy, arcR, MID, needleAngle);
+    gCtx.strokeStyle = color;
+    gCtx.lineWidth = arcW;
+    gCtx.lineCap = 'round';
+    gCtx.stroke();
+    gCtx.restore();
+
+    // Inner bright highlight line
+    gCtx.save();
+    gCtx.beginPath();
+    if (isInj) gCtx.arc(cx, cy, arcR, needleAngle, MID);
+    else       gCtx.arc(cx, cy, arcR, MID, needleAngle);
+    gCtx.strokeStyle = 'rgba(255, 255, 255, 0.45)';
+    gCtx.lineWidth = arcW * 0.3;
+    gCtx.lineCap = 'round';
+    gCtx.stroke();
+    gCtx.restore();
+  }
+
+  // ── Zero marker (bright gold bar)
+  gCtx.save();
+  gCtx.shadowColor = cv('--gold');
+  gCtx.shadowBlur = 16;
+  const zR1 = arcR - arcW / 2 - 3;
+  const zR2 = arcR + arcW / 2 + 3;
+  gCtx.beginPath();
+  gCtx.moveTo(cx + zR1 * Math.cos(MID), cy + zR1 * Math.sin(MID));
+  gCtx.lineTo(cx + zR2 * Math.cos(MID), cy + zR2 * Math.sin(MID));
+  gCtx.strokeStyle = cv('--gold');
+  gCtx.lineWidth = 3;
+  gCtx.stroke();
+  gCtx.restore();
+
+  // ── Scale labels
+  gCtx.font = '600 10px "JetBrains Mono", monospace';
+  gCtx.textAlign = 'center';
+  gCtx.textBaseline = 'middle';
+  const cR = cv('--cyan-rgb'), rR = cv('--red-rgb'), gR = cv('--gold-rgb');
+  const labels = [
+    { ra: -1,   t: '-7.4k', c: `rgba(${cR},0.85)` },
+    { ra: -0.5, t: '-3.7k', c: `rgba(${cR},0.6)` },
+    { ra:  0,   t: '0',     c: `rgba(${gR},0.95)` },
+    { ra:  0.5, t: '+3.7k', c: `rgba(${rR},0.6)` },
+    { ra:  1,   t: '+7.4k', c: `rgba(${rR},0.85)` },
+  ];
+  for (const l of labels) {
+    const a  = MID + l.ra * (SPAN / 2);
+    const lR = arcR - arcW / 2 - 16;
+    gCtx.fillStyle = l.c;
+    gCtx.fillText(l.t, cx + lR * Math.cos(a), cy + lR * Math.sin(a));
+  }
+
+  // ── Particles
+  for (const p of gauge.particles) {
+    const px = cx + p.radius * Math.cos(p.angle);
+    const py = cy + p.radius * Math.sin(p.angle);
+    const col = `rgba(${p.color.join(',')}, 1)`;
+    gCtx.save();
+    gCtx.globalAlpha = p.life * 0.9;
+    gCtx.fillStyle = col;
+    gCtx.shadowColor = col;
+    gCtx.shadowBlur = 10;
+    gCtx.beginPath();
+    gCtx.arc(px, py, p.size, 0, Math.PI * 2);
+    gCtx.fill();
+    gCtx.restore();
+  }
+
+  // ── Needle afterimage trail
+  gauge.needleHist.push(needleAngle);
+  if (gauge.needleHist.length > 8) gauge.needleHist.shift();
+
+  const needleR = arcR + arcW / 2 + 4;
+  for (let i = 0; i < gauge.needleHist.length - 1; i++) {
+    const a     = gauge.needleHist[i];
+    const alpha = (i / gauge.needleHist.length) * 0.18;
+    gCtx.save();
+    gCtx.globalAlpha = alpha;
+    gCtx.beginPath();
+    gCtx.moveTo(cx, cy);
+    gCtx.lineTo(cx + needleR * Math.cos(a), cy + needleR * Math.sin(a));
+    gCtx.strokeStyle = '#ffffff';
+    gCtx.lineWidth = 2.5;
+    gCtx.lineCap = 'round';
+    gCtx.stroke();
+    gCtx.restore();
+  }
+
+  // ── Main needle (glowing triangle)
+  gCtx.save();
+  gCtx.shadowColor = '#ffffff';
+  gCtx.shadowBlur = 22;
+  const nTipX = cx + needleR * Math.cos(needleAngle);
+  const nTipY = cy + needleR * Math.sin(needleAngle);
+  const pAngle = needleAngle + Math.PI / 2;
+  const baseW = 5;
+  gCtx.beginPath();
+  gCtx.moveTo(cx + baseW * Math.cos(pAngle), cy + baseW * Math.sin(pAngle));
+  gCtx.lineTo(nTipX, nTipY);
+  gCtx.lineTo(cx - baseW * Math.cos(pAngle), cy - baseW * Math.sin(pAngle));
+  gCtx.closePath();
+  gCtx.fillStyle = '#ffffff';
+  gCtx.fill();
+  gCtx.restore();
+
+  // ── Central hub
+  const hubR = Math.max(13, r * 0.055);
+
+  gCtx.save();
+  gCtx.shadowColor = cv('--cyan');
+  gCtx.shadowBlur = 16;
+  gCtx.beginPath();
+  gCtx.arc(cx, cy, hubR + 3, 0, Math.PI * 2);
+  gCtx.strokeStyle = cv('--cyan');
+  gCtx.lineWidth = 1.8;
+  gCtx.stroke();
+  gCtx.restore();
+
+  const hubGrad = gCtx.createRadialGradient(cx, cy, 0, cx, cy, hubR);
+  hubGrad.addColorStop(0, '#0a1a2e');
+  hubGrad.addColorStop(1, '#000');
+  gCtx.beginPath();
+  gCtx.arc(cx, cy, hubR, 0, Math.PI * 2);
+  gCtx.fillStyle = hubGrad;
+  gCtx.fill();
+
+  gCtx.beginPath();
+  gCtx.arc(cx, cy, 3, 0, Math.PI * 2);
+  gCtx.fillStyle = cv('--cyan');
+  gCtx.fill();
+}
+
+// ── Animation loop ───────────────────────────────────────
+function animate() {
+  const diff = gauge.target - gauge.current;
+  gauge.current += diff * 0.09;
+  if (Math.abs(diff) < 0.3) gauge.current = gauge.target;
+
+  // Live-tween the readout number
+  const numEl = document.getElementById('gvNum');
+  if (numEl) numEl.textContent = fr(Math.round(gauge.current));
+
+  updateParticles();
+  drawGauge();
+  requestAnimationFrame(animate);
+}
+animate();
+
+// ══════════════════════════════════════════════════════════
+// LIVE UPDATES
+// ══════════════════════════════════════════════════════════
+
+function updateLive(d) {
+  const tw = d.total_w || 0;
+  gauge.target = tw;
+
+  const vEl = document.getElementById('gaugeValue');
+  const sEl = document.getElementById('gaugeState');
+
+  if (tw < -20) {
+    vEl.className = 'gauge-value neg';
+    sEl.className = 'gauge-state neg';
+    sEl.textContent = '◀ SOLAR EXPORT ◀';
+  } else if (tw > 20) {
+    vEl.className = 'gauge-value pos';
+    sEl.className = 'gauge-state pos';
+    sEl.textContent = '▶ GRID IMPORT ▶';
+  } else {
+    vEl.className = 'gauge-value zero';
+    sEl.className = 'gauge-state zero';
+    sEl.textContent = '━ EQUILIBRIUM ━';
+  }
+
+  checkAlert(tw);
+
+  updateVoie('c0', d.channels ? d.channels['0'] : null);
+
+  if (d.device) updateDeviceHealth(d.device, d.freq);
+}
+
+// ── Device health bar ────────────────────────────────────
+function fmtUptime(sec) {
+  if (sec == null) return '—';
+  const d = Math.floor(sec / 86400);
+  const h = Math.floor((sec % 86400) / 3600);
+  const m = Math.floor((sec % 3600) / 60);
+  const s = sec % 60;
+  if (d > 0) return `${d}d ${String(h).padStart(2,'0')}h${String(m).padStart(2,'0')}`;
+  return `${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;
+}
+
+function updateDeviceHealth(dev, freq) {
+  // Frequency
+  if (freq != null) document.getElementById('dh-freq').textContent = freq.toFixed(2);
+
+  // Temperature — classes for warm/hot
+  const tEl = document.getElementById('dh-temp');
+  if (dev.temp_c != null) {
+    tEl.textContent = dev.temp_c.toFixed(1);
+    tEl.classList.remove('warm', 'hot');
+    if (dev.temp_c > 70)      tEl.classList.add('hot');
+    else if (dev.temp_c > 55) tEl.classList.add('warm');
+  }
+
+  // WiFi RSSI — classes for weak/bad
+  const rEl = document.getElementById('dh-rssi');
+  if (dev.wifi_rssi != null) {
+    rEl.textContent = dev.wifi_rssi;
+    rEl.classList.remove('weak', 'bad');
+    if (dev.wifi_rssi < -80)      rEl.classList.add('bad');
+    else if (dev.wifi_rssi < -70) rEl.classList.add('weak');
+  }
+
+  // Shelly device uptime (replaces former app-session uptime)
+  if (dev.uptime_s != null) {
+    document.getElementById('dh-uptime').textContent = fmtUptime(dev.uptime_s);
+    const hudUp = document.getElementById('uptime');
+    if (hudUp) hudUp.textContent = fmtUptime(dev.uptime_s);
+  }
+
+  // Firmware current + available
+  if (dev.fw_current) document.getElementById('dh-fw').textContent = dev.fw_current;
+  const upd = document.getElementById('dh-fw-upd');
+  const badge = document.getElementById('fwBadge');
+  if (dev.fw_available && dev.fw_available !== dev.fw_current) {
+    upd.textContent = `↑ ${dev.fw_available}`;
+    badge.classList.add('show');
+    badge.title = `Mise à jour firmware Shelly disponible : ${dev.fw_current} → ${dev.fw_available}`;
+  } else {
+    upd.textContent = '';
+    badge.classList.remove('show');
+  }
+}
+
+function updateVoie(id, ch) {
+  const card = document.getElementById(`card-${id}`);
+  if (!ch) {
+    card.classList.add('unused');
+    document.getElementById(`${id}-w`).innerHTML = `0<sup>W</sup>`;
+    return;
+  }
+  const w = ch.w || 0;
+  const v = ch.v || 0;
+  const a = ch.a || 0;
+  const isActive = Math.abs(w) > 0.5 || Math.abs(a) > 0.01;
+  card.classList.toggle('unused', !isActive);
+
+  const wEl = document.getElementById(`${id}-w`);
+  wEl.innerHTML = `${fr(Math.round(w))}<sup>W</sup>`;
+  wEl.className = 'voie-value-big ' + (w < -5 ? 'neg' : w > 5 ? 'pos' : 'zero');
+
+  document.getElementById(`${id}-bar`).style.width =
+    Math.min(100, (Math.abs(w) / MAX_CH_W) * 100) + '%';
+  document.getElementById(`${id}-v`).textContent  = f(v, 0, 'V');
+  document.getElementById(`${id}-a`).textContent  = f(a, 2, 'A');
+  document.getElementById(`${id}-pf`).textContent = f(ch.pf, 2);
+  const va = ch.va != null ? ch.va : v * Math.abs(a);
+  document.getElementById(`${id}-va`).textContent = f(va, 0);
+}
+
+function checkAlert(w) {
+  const wrap = document.getElementById('gaugeWrap');
+  if (w > alertThreshold) wrap.classList.add('alert-on');
+  else                    wrap.classList.remove('alert-on');
+}
+
+// ── Save alert threshold ─────────────────────────────────
+async function saveAlert() {
+  const val = parseInt(document.getElementById('alertInput').value);
+  if (isNaN(val) || val < 100) return;
+  alertThreshold = val;
+  await fetch('/api/settings', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ alert_threshold: val }),
+  });
+  const ok = document.getElementById('savedOk');
+  ok.classList.add('show');
+  setTimeout(() => ok.classList.remove('show'), 1800);
+}
+
+// ── Stats refresh ────────────────────────────────────────
+async function loadStats() {
+  try {
+    const s = await fetch('/api/stats').then(r => r.json());
+    document.getElementById('kwh-imp').textContent       = s.kwh_imp_today.toFixed(2);
+    document.getElementById('kwh-exp').textContent       = s.kwh_exp_today.toFixed(2);
+    document.getElementById('kwh-week').textContent      = s.kwh_week.toFixed(1);
+    document.getElementById('kwh-month').textContent     = s.kwh_month.toFixed(1);
+    document.getElementById('kwh-exp-week').textContent  = (s.kwh_exp_week || 0).toFixed(1);
+    document.getElementById('kwh-exp-month').textContent = (s.kwh_exp_month || 0).toFixed(1);
+    document.getElementById('stat-min').textContent  = fr(s.today_min);
+    document.getElementById('stat-max').textContent  = fr(s.today_max);
+    document.getElementById('stat-avg').textContent  = fr(s.today_avg);
+  } catch (_) {}
+}
+loadStats();
+setInterval(loadStats, 30000);
+
+// ── History chart ────────────────────────────────────────
+async function loadHistory() {
+  try {
+    const rows = await fetch('/api/history').then(r => r.json());
+    if (!rows.length) return;
+
+    const labels = rows.map(r =>
+      new Date(r.minute).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })
+    );
+
+    const data = {
+      labels,
+      datasets: [
+        {
+          label: 'TOTAL',
+          data: rows.map(r => +(r.total || 0).toFixed(0)),
+          borderColor: cv('--gold'),
+          backgroundColor: (ctx) => {
+            const chart = ctx.chart;
+            const { ctx: c, chartArea } = chart;
+            if (!chartArea) return `rgba(${cv('--gold-rgb')},0.1)`;
+            const grad = c.createLinearGradient(0, chartArea.top, 0, chartArea.bottom);
+            grad.addColorStop(0,   `rgba(${cv('--red-rgb')},0.28)`);
+            grad.addColorStop(0.5, `rgba(${cv('--gold-rgb')},0.08)`);
+            grad.addColorStop(1,   `rgba(${cv('--cyan-rgb')},0.28)`);
+            return grad;
+          },
+          borderWidth: 2,
+          pointRadius: 0,
+          tension: 0.38,
+          fill: true,
+        },
+        {
+          label: 'VOIE 01',
+          data: rows.map(r => +(r.c0 || 0).toFixed(0)),
+          borderColor: cv('--cyan'),
+          backgroundColor: 'transparent',
+          borderWidth: 1.4,
+          pointRadius: 0,
+          tension: 0.32,
+          fill: false,
+        },
+      ],
+    };
+
+    if (histChart) {
+      histChart.data = data;
+      histChart.update('none');
+    } else {
+      histChart = new Chart(document.getElementById('chart'), {
+        type: 'line', data,
+        options: {
+          responsive: true, maintainAspectRatio: false,
+          animation: { duration: 400 },
+          interaction: { mode: 'index', intersect: false },
+          plugins: {
+            legend: {
+              labels: {
+                color: cv('--text-dim'),
+                font: { family: 'JetBrains Mono', size: 10 },
+                boxWidth: 10, boxHeight: 10,
+                padding: 14,
+              },
+            },
+            tooltip: {
+              backgroundColor: 'rgba(6, 14, 26, 0.95)',
+              borderColor: `rgba(${cv('--cyan-rgb')},0.3)`,
+              borderWidth: 1,
+              titleColor: cv('--text'),
+              bodyColor:  cv('--text-dim'),
+              titleFont:  { family: 'JetBrains Mono', size: 10 },
+              bodyFont:   { family: 'JetBrains Mono', size: 11 },
+              padding: 10,
+              callbacks: {
+                label: ctx => ` ${ctx.dataset.label}  ${fr(ctx.parsed.y)} W`,
+              },
+            },
+          },
+          scales: {
+            x: {
+              ticks: {
+                color: cv('--muted'),
+                font: { family: 'JetBrains Mono', size: 9 },
+                maxTicksLimit: 14, maxRotation: 0,
+              },
+              grid: { color: `rgba(${cv('--cyan-rgb')},0.05)` },
+            },
+            y: {
+              ticks: {
+                color: cv('--muted'),
+                font: { family: 'JetBrains Mono', size: 9 },
+                callback: v => fr(v),
+              },
+              grid: { color: `rgba(${cv('--cyan-rgb')},0.05)` },
+            },
+          },
+        },
+      });
+    }
+  } catch (_) {}
+}
+loadHistory();
+setInterval(loadHistory, 60000);
+
+// ── Load saved settings ──────────────────────────────────
+fetch('/api/settings').then(r => r.json()).then(s => {
+  alertThreshold = s.alert_threshold;
+  document.getElementById('alertInput').value = s.alert_threshold;
+}).catch(() => {});
+
+// ── Electron integration ─────────────────────────────────
+(function initElectron() {
+  const api = window.electronAPI;
+  if (!api) return;
+  document.body.classList.add('is-electron');
+
+  const btnWidget = document.getElementById('btnWidget');
+  const btnMin    = document.getElementById('btnMin');
+  const btnClose  = document.getElementById('btnClose');
+
+  btnWidget && btnWidget.addEventListener('click', () => api.toggleWidget());
+  btnMin    && btnMin.addEventListener('click',    () => api.minimize());
+  btnClose  && btnClose.addEventListener('click',  () => api.hide());
+
+  api.onModeChange((mode) => {
+    document.body.classList.toggle('widget-mode', mode === 'widget');
+    // Trigger canvas resize after layout settles
+    setTimeout(() => window.dispatchEvent(new Event('resize')), 60);
+  });
+
+  api.getMode().then((mode) => {
+    document.body.classList.toggle('widget-mode', mode === 'widget');
+    setTimeout(() => window.dispatchEvent(new Event('resize')), 60);
+  });
+})();
+</script>
+
+</body>
+</html>

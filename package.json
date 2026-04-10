@@ -1,0 +1,48 @@
+{
+  "name": "compteur-electric",
+  "version": "1.0.0",
+  "description": "Dashboard temps reel Shelly EM Gen3 - Power Station Reactor Control",
+  "main": "main.js",
+  "scripts": {
+    "start": "electron .",
+    "server": "node server.js",
+    "build": "electron-builder --win portable",
+    "dist": "electron-builder --win portable"
+  },
+  "dependencies": {
+    "express": "^4.18.2",
+    "ws": "^8.16.0"
+  },
+  "devDependencies": {
+    "electron": "^31.3.1",
+    "electron-builder": "^24.13.3"
+  },
+  "build": {
+    "appId": "com.gael.powerstation",
+    "productName": "PowerStation",
+    "asar": true,
+    "files": [
+      "main.js",
+      "preload.js",
+      "server.js",
+      "public/**/*"
+    ],
+    "win": {
+      "target": [
+        {
+          "target": "portable",
+          "arch": [
+            "x64"
+          ]
+        }
+      ],
+      "artifactName": "PowerStation-${version}-portable.exe"
+    },
+    "portable": {
+      "artifactName": "PowerStation-${version}-portable.exe"
+    },
+    "directories": {
+      "output": "dist"
+    }
+  }
+}
