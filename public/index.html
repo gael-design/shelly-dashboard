@@ -779,6 +779,77 @@
       .cockpit { grid-template-rows: 42px 1fr 130px; }
     }
 
+    /* ═══ Pi 7" touchscreen (800×480) ═══════════════════════ */
+    @media (max-width: 820px) {
+      .cockpit { grid-template-rows: 34px 1fr 100px; gap: 3px; padding: 3px; }
+      .main-grid { grid-template-columns: 155px 1fr 155px; gap: 3px; }
+      .brand h1 { font-size: 11px; }
+      .brand .sub, .fw-badge { display: none; }
+      .hud-top { padding: 0 8px; gap: 8px; }
+      .hud-center .label, .hud-right .uptime { font-size: 8px; }
+      .hud-center .value, .hud-right .clock { font-size: 9px; }
+
+      /* Left column — give more space to VOIE 01 */
+      .voies-col { grid-template-rows: 1.4fr 1fr; gap: 3px; }
+
+      /* Voie card — compact */
+      .voie-card .panel-label { font-size: 8px; }
+      .voie-card .card-label { font-size: 8px; }
+      .voie-value-big { font-size: clamp(20px, 5vw, 28px); margin: 2px 0 1px; }
+      .voie-value-big sup { font-size: 0.3em; }
+      .voie-bar-track { height: 2px; margin: 2px 0 4px; }
+      .voie-meta { gap: 2px; }
+      .meta-cell { padding: 2px 5px; }
+      .meta-cell .m-label { font-size: 7px; }
+      .meta-cell .m-val { font-size: 10px; }
+
+      /* Export pair — shrink */
+      .exp-pair .card { padding: 4px 8px; }
+      .exp-pair .card-label { font-size: 7px; }
+      .exp-pair .big-val { font-size: clamp(16px, 3.5vw, 22px); }
+      .exp-pair .unit { font-size: 7px; }
+
+      /* Stats column */
+      .stats-col { gap: 3px; }
+      .big-stat .stat-label { font-size: 8px; }
+      .big-stat .big-val { font-size: clamp(18px, 4vw, 26px); }
+      .big-stat .stat-unit { font-size: 8px; }
+      .stat-pair { gap: 3px; }
+
+      /* Telemetry bottom */
+      .telemetry { padding: 4px 8px 6px; gap: 3px; }
+      .tel-stats { gap: 10px; }
+      .tstat { font-size: 8px; }
+      .tel-title { font-size: 8px; }
+      .device-health { gap: 10px; }
+      .device-health span { font-size: 8px; }
+
+      /* Alert threshold */
+      .alert-row { gap: 6px; }
+      .alert-row label, .alert-row input, .alert-row button { font-size: 9px; }
+      .alert-row input { width: 50px; padding: 2px 4px; }
+      .alert-row button { padding: 2px 8px; }
+
+      /* Gauge */
+      .gauge-wrap .corner { width: 16px; height: 16px; }
+
+      /* Theme button */
+      .theme-btn { font-size: 8px; padding: 3px 8px; }
+
+      /* Cards general */
+      .card { padding: 6px 8px; }
+    }
+
+    @media (max-height: 500px) {
+      .cockpit { grid-template-rows: 30px 1fr 90px; gap: 2px; padding: 2px; }
+      .voies-col { gap: 2px; }
+      .voie-value-big { font-size: clamp(18px, 4.5vw, 24px); margin: 1px 0 0; }
+      .voie-bar-track { margin: 1px 0 3px; }
+      .meta-cell { padding: 1px 4px; }
+      .meta-cell .m-val { font-size: 9px; }
+      .telemetry { padding: 3px 6px 4px; }
+    }
+
     /* ═══ Electron — drag region & window controls ═══════════ */
     body.is-electron .hud-top { -webkit-app-region: drag; }
     body.is-electron .hud-top .no-drag,
@@ -1375,6 +1446,7 @@ animate();
 // ══════════════════════════════════════════════════════════
 
 function updateLive(d) {
+  setStatus(true);
   const tw = d.total_w || 0;
   gauge.target = tw;
 
